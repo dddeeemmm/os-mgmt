@@ -1,0 +1,134 @@
+- include: os_tasks_instances.yml
+  vars:
+    os_instance_state: absent
+  loop: '{{ os_instances }}'
+  loop_control:
+    loop_var: os_instance
+  when:
+    - os_instances is defined
+    - os_instances | length > 0
+    - os_mode != 'project'
+  tags: os_instances
+
+
+- include: os_tasks_clusters.yml
+  vars:
+    os_cluster_state: absent
+  loop: '{{ os_clusters | default ({}) | dict2items }}'
+  loop_control:
+    loop_var: os_cluster
+  when:
+    - os_clusters is defined
+    - os_mode != 'project'
+  tags: os_clusters
+
+
+- include: os_tasks_instances.yml
+  vars:
+    os_instance_state: absent
+  loop: '{{ os_bastion }}'
+  loop_control:
+    loop_var: os_instance
+  when:
+    - os_bastion_state is defined
+    - os_mode != 'project'
+  tags: os_bastion
+  
+  
+- block:
+  
+  - import_tasks: os_tasks_get_project_id.yml
+  
+  - name: '{{ os_project_state }} security groups and rules in {{ os_project_name }}'
+    import_tasks: os_tasks_security_groups_and_rules.yml
+    environment:
+      OS_PROJECT_ID: '{{ os_project_id }}'
+    when: os_mode != 'instances'
+    
+  tags: [ os_security_groups, os_sg ]
+
+
+- block:
+  
+    - import_tasks: os_tasks_get_project_id.yml
+    
+    - name: '{{ os_project_state }} containers in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_object:
+        validate_certs: '{{ os_validate_certs }}'
+        state: '{{ os_project_state }}'
+        container: '{{ item }}'
+      loop: '{{ os_containers }}'
+    
+  when:
+    - os_containers
+    - os_mode != 'instances'
+    
+  tags: os_container
+  
+  
+- block:
+  
+    - import_tasks: os_tasks_get_project_id.yml
+    
+    - name: '{{ os_project_state }} router in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_router:
+        state: '{{ os_project_state }}'
+        project: '{{ os_project_name }}'
+        name: r1-int-{{ os_project_name }}
+        network: os-infra-peering-cr
+        validate_certs: '{{ os_validate_certs }}'
+        enable_snat: no
+        interfaces:
+          - net: '{{ os_project_name }}-net-1'
+            subnet: '{{ os_project_name }}-subnet-1'
+            
+    - name: '{{ os_project_state }} subnet in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_subnet:
+        state: '{{ os_project_state }}'
+        project: '{{ os_project_name }}'
+        name: '{{ os_project_name }}-subnet-1'
+        network_name: '{{ os_project_name }}-net-1'
+        use_default_subnetpool: yes
+        validate_certs: '{{ os_validate_certs }}'
+        
+    - name: '{{ os_project_state }} network in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_network:
+        state: '{{ os_project_state }}'
+        name: '{{ os_project_name }}-net-1'
+        project: '{{ os_project_name }}'
+        validate_certs: '{{ os_validate_certs }}'
+      
+  when: os_mode != 'instances'
+  tags: os_network
+
+
+- block:
+  
+    - import_tasks: os_tasks_get_project_id.yml
+    
+    - name: '{{ os_project_state }} keypair in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_keypair:
+        state: '{{ os_project_state }}'
+        name: '{{ os_project_name }}-main-keypair'
+        validate_certs: '{{ os_validate_certs }}'
+      
+  when: os_mode != 'instances'
+  tags: os_keypair
+
+
+- name: '{{ os_project_state }} {{ os_project_name }} project'
+  import_tasks: os_tasks_project.yml
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  when: os_mode != 'instances'
+  tags: os_project

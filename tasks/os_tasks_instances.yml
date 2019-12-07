@@ -1,0 +1,225 @@
+- block:
+  - name: get instance '{{ os_instance_name | default ('instance') }}' name
+    set_fact:
+      os_instance_name: '{{ os_instance.name }}'
+  rescue:
+  - name: set instance name name to 'instance'
+    set_fact:
+      os_instance_name: instance
+  
+  
+- block:
+  - name: get instance '{{ os_instance_name }}' state
+    set_fact:
+      os_instance_state: '{{ os_instance.state }}'
+  rescue:
+  - name: set instance '{{ os_instance_name }}' state to 'present'
+    set_fact:
+      os_instance_state: present
+  
+
+- block:
+  - name: get instance '{{ os_instance_name }}' img
+    set_fact:
+      os_instance_image: '{{ os_instance.img }}'
+  rescue:
+  - block:
+    - name: get instance '{{ os_instance_name }}' image
+      set_fact:
+        os_instance_image: '{{ os_instance.image }}'
+    rescue:
+    - name: set instance '{{ os_instance_name }}' image to 'ubuntu'
+      set_fact:
+        os_instance_image: '{{ ubuntu }}'
+
+
+- block:
+  - name: get instance '{{ os_instance_name }}' fv
+    set_fact:
+      os_instance_flavor: '{{ os_instance.fv }}'
+  rescue:
+  - block:
+    - name: get instance '{{ os_instance_name }}' flavor
+      set_fact:
+        os_instance_flavor: '{{ os_instance.flavor }}'
+    rescue:
+    - name: set instance '{{ os_instance_name }}' flavor to '{{ fv_default }}'
+      set_fact:
+        os_instance_flavor: '{{ fv_default }}'
+
+
+- block:
+  - name: get instance '{{ os_instance_name }}' gr
+    set_fact:
+      os_instance_groups: '{{ os_instance.gr }}'
+  rescue:
+  - block:
+    - name: get instance '{{ os_instance_name }}' groups
+      set_fact:
+        os_instance_groups: '{{ os_instance.groups }}'
+    rescue:
+    - name: set instance '{{ os_instance_name }}' groups to '{{ os_instance_name }}'
+      set_fact:
+        os_instance_groups: '{{ os_instance_name }}'
+      
+    
+- block:
+  - name: get instance {{ os_instance_name }} sg
+    set_fact:
+      os_instance_security_groups: '{{ os_instance.sg }}'
+  rescue:
+  - block:
+    - name: get instance {{ os_instance_name }} security groups
+      set_fact:
+        os_instance_security_groups: '{{ os_instance.security_groups }}'
+    rescue:
+    - name: set instance '{{ os_instance_name }}' security groups to '{{ sg_default }}'
+      set_fact:
+        os_instance_security_groups: '{{ sg_default }}'
+
+
+- block:
+  - name: set instance '{{ os_instance_name }}' volume size
+    set_fact:
+      os_instance_volume: '{{ os_instance.hdd }}'
+  rescue:
+  - name: unset instance '{{ os_instance_name }}' volume size
+    set_fact:
+      os_instance_volume: unset
+
+
+- block:
+  - name: set instance '{{ os_instance_name }}' advanced volume size
+    set_fact:
+      os_instance_volume_advanced: '{{ os_instance.hdd_adv }}'
+  rescue:
+  - name: unset instance '{{ os_instance_name }}' advanced volume size
+    set_fact:
+      os_instance_volume_advanced: unset
+
+
+- block:
+  - name: get instance '{{ os_instance_name }}' user
+    set_fact:
+      os_instance_user: '{{ os_instance.user }}'
+  rescue:
+  - name: set instance '{{ os_instance_name }}' user to 'ubuntu'
+    set_fact:
+      os_instance_user: ubuntu
+    when: os_instance_image is search 'ubuntu'
+    
+  - name: set instance '{{ os_instance_name }}' user to 'centos'
+    set_fact:
+      os_instance_user: centos
+    when: os_instance_image is search 'centos'
+
+  
+- import_tasks: os_tasks_get_project_id.yml
+
+
+- block:
+
+    - name: '{{ os_instance_state }} advanced volume {{ os_instance_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_volume:
+        state: '{{ os_instance_state }}'
+        display_name: '{{ os_instance_name }}'
+        size: '{{ os_instance_volume_advanced }}'
+        validate_certs: '{{ os_validate_certs }}'
+      when: os_instance_state == 'present'
+      
+    - name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }} with /dev/sda:{{ os_instance_volume }}GB /dev/sdb:{{ os_instance_volume_advanced }}GB'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      vars:
+        os_instance_fqdn: '{{ os_instance_fqdn_instance }}'
+      os_server:
+        wait: no
+        auto_ip: no
+        validate_certs: '{{ os_validate_certs }}'
+        boot_from_volume: yes
+        terminate_volume: yes
+        name: '{{ os_instance_name }}'
+        image: '{{ os_instance_image }}'
+        state: '{{ os_instance_state }}'
+        flavor: '{{ os_instance_flavor }}'
+        network: '{{ os_project_name }}-net-1'
+        userdata: '{{ os_userdata_defaults }}'
+        volume_size: '{{ os_instance_volume }}'
+        key_name: '{{ os_project_name }}-main-keypair'
+        security_groups: '{{ os_instance_security_groups }}'
+        volumes:
+          - '{{ os_instance_name }}'
+        meta:
+          groups: '{{ os_instance_groups }}'
+          hostname: '{{ os_instance_name }}'
+          ansible_user: '{{ os_instance_user }}'
+          
+    - name: '{{ os_instance_state }} advanced volume {{ os_instance_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_volume:
+        state: '{{ os_instance_state }}'
+        display_name: '{{ os_instance_name }}'
+        size: '{{ os_instance_volume_advanced }}'
+        validate_certs: '{{ os_validate_certs }}'
+      when: os_instance_state == 'absent'
+    
+  when:
+    - os_instance_volume_advanced is defined and os_instance_volume_advanced != 'unset'
+    - os_instance_volume is defined and os_instance_volume != 'unset'
+
+
+- name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }} with /dev/sda:{{ os_instance_volume }}GB'
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  vars:
+    os_instance_fqdn: '{{ os_instance_fqdn_instance }}'
+  os_server:
+    wait: no
+    auto_ip: no
+    validate_certs: '{{ os_validate_certs }}'
+    boot_from_volume: yes
+    terminate_volume: yes
+    name: '{{ os_instance_name }}'
+    image: '{{ os_instance_image }}'
+    state: '{{ os_instance_state }}'
+    flavor: '{{ os_instance_flavor }}'
+    network: '{{ os_project_name }}-net-1'
+    userdata: '{{ os_userdata_defaults }}'
+    volume_size: '{{ os_instance_volume }}'
+    key_name: '{{ os_project_name }}-main-keypair'
+    security_groups: '{{ os_instance_security_groups }}'
+    meta:
+      groups: '{{ os_instance_groups }}'
+      hostname: '{{ os_instance_name }}'
+      ansible_user: '{{ os_instance_user }}'
+  when:
+    - os_instance_volume_advanced is undefined or os_instance_volume_advanced == 'unset'
+    - os_instance_volume is defined and os_instance_volume != 'unset'
+  
+- name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }}'
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  vars:
+    os_instance_fqdn: '{{ os_instance_fqdn_instance }}'
+  os_server:
+    wait: no
+    auto_ip: no
+    validate_certs: '{{ os_validate_certs }}'
+    name: '{{ os_instance_name }}'
+    image: '{{ os_instance_image }}'
+    state: '{{ os_instance_state }}'
+    flavor: '{{ os_instance_flavor }}'
+    network: '{{ os_project_name }}-net-1'
+    userdata: '{{ os_userdata_defaults }}'
+    key_name: '{{ os_project_name }}-main-keypair'
+    security_groups: '{{ os_instance_security_groups }}'
+    meta:
+      groups: '{{ os_instance_groups }}'
+      hostname: '{{ os_instance_name }}'
+      ansible_user: '{{ os_instance_user }}'
+  when:
+    - os_instance_volume_advanced is undefined or os_instance_volume_advanced == 'unset'
+    - os_instance_volume is undefined or os_instance_volume == 'unset'

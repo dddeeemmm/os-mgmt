@@ -1,0 +1,8 @@
+- name: get {{ os_project_name }} project id
+  os_project_facts:
+    name: '{{ os_project_name }}'
+    validate_certs: '{{ os_validate_certs }}'
+
+- name: set {{ os_project_name }} project id
+  set_fact:
+    os_project_id: "{{ openstack_projects | map (attribute='id') | join (',') }}"

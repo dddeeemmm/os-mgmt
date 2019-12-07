@@ -1,0 +1,18 @@
+- name: '{{ os_project_state }} {{ os_project_name }} project with description'
+  os_project:
+    name: "{{ os_project_name }}"
+    description: "{{ os_project_description }}"
+    domain_id: "{{ os_project_domain_id }}"
+    state: "{{ os_project_state }}"
+    validate_certs: '{{ os_validate_certs }}'
+    enabled: yes
+  when: os_project_description != ''
+
+- name: '{{ os_project_state }} {{ os_project_name }} project without description'
+  os_project:
+    name: "{{ os_project_name }}"
+    domain_id: "{{ os_project_domain_id }}"
+    state: "{{ os_project_state }}"
+    validate_certs: '{{ os_validate_certs }}'
+    enabled: yes
+  when: os_project_description == ''

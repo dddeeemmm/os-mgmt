@@ -1,0 +1,6 @@
+- name: '{{ os_project_state }} {{ os_security_group_name }} security group'
+  os_security_group:
+    validate_certs: '{{ os_validate_certs }}'
+    state: '{{ os_project_state }}'
+    name: '{{ os_security_group_name }}'
+  register: os_security_group_modify

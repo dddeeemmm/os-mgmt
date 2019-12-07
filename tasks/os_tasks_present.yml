@@ -1,0 +1,160 @@
+- import_tasks: os_tasks_project.yml
+  when: os_mode != 'instances'
+  tags: os_project
+
+- name: '{{ os_project_state }} permissions to {{ os_project_name }}'
+  os_user_role:
+    project: '{{ os_project_name }}'
+    group: '{{ item.group }}'
+    role: '{{ item.role }}'
+    validate_certs: '{{ os_validate_certs }}'
+  loop:
+    - { group: openstack-admins,          role: admin         }
+    - { group: openstack-swiftoperators,  role: swiftoperator }
+  when:
+    - os_mode != 'instances'
+  tags: os_user_groups
+
+
+- block:
+
+  - import_tasks: os_tasks_get_project_id.yml
+
+  - name: set qoutas for {{ os_project_name }}
+    environment:
+      OS_PROJECT_ID: '{{ os_project_id }}'
+    os_quota:
+      name: '{{ os_project_name }}'
+      security_group_rule: 100
+      security_group: 100
+      validate_certs: '{{ os_validate_certs }}'
+      ram: 1024000
+      state: present
+
+  when: os_mode != 'instances'
+  tags: os_quotas
+
+
+- block:
+
+    - import_tasks: os_tasks_get_project_id.yml
+      tags: os_security_groups
+  
+    - name: '{{ os_project_state }} network in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_network:
+        state: '{{ os_project_state }}'
+        project: '{{ os_project_name }}'
+        name: '{{ os_project_name }}-net-1'
+        validate_certs: '{{ os_validate_certs }}'
+  
+    - name: '{{ os_project_state }} subnet in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_subnet:
+        validate_certs: '{{ os_validate_certs }}'
+        use_default_subnetpool: yes
+        state: '{{ os_project_state }}'
+        project: '{{ os_project_name }}'
+        name: '{{ os_project_name }}-subnet-1'
+        network_name: '{{ os_project_name }}-net-1'
+        dns_nameservers: '{{ os_dns_name_servers }}'
+
+    - name: '{{ os_project_state }} router in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_router:
+        validate_certs: '{{ os_validate_certs }}'
+        enable_snat: false
+        network: os-infra-peering-cr
+        name: r1-int-{{ os_project_name }}
+        project: '{{ os_project_name }}'
+        state: '{{ os_project_state }}'
+        interfaces:
+          - net: '{{ os_project_name }}-net-1'
+            subnet: '{{ os_project_name }}-subnet-1'
+
+  when: os_mode != 'instances'
+  tags: os_network
+
+
+- block:
+
+    - import_tasks: os_tasks_get_project_id.yml
+
+    - import_tasks: os_tasks_security_groups_and_rules.yml
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+
+  when: os_mode != 'instances'
+  tags: [ os_security_groups, os_sg ]
+
+
+- block:
+
+    - import_tasks: os_tasks_get_project_id.yml
+
+    - name: '{{ os_project_state }} keypair in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_keypair:
+        validate_certs: '{{ os_validate_certs }}'
+        state: '{{ os_project_state }}'
+        name: '{{ os_project_name }}-main-keypair'
+        public_key: '{{ os_keypair_public_key }}'
+
+  when: os_mode != 'instances'
+  tags: [ os_keypair ]
+
+
+- block:
+
+    - import_tasks: os_tasks_get_project_id.yml
+
+    - name: '{{ os_project_state }} containers in {{ os_project_name }}'
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      os_object:
+        state: '{{ os_project_state }}'
+        container: '{{ item }}'
+        validate_certs: '{{ os_validate_certs }}'
+        verify: no
+      loop: '{{ os_containers }}'
+
+  when:
+    - os_containers is defined
+    - os_containers != ''
+    - os_mode != 'instances'
+  tags: os_container
+
+
+- include: os_tasks_instances.yml
+  vars:
+    os_instance_state: '{{ os_bastion_state }}'
+  loop: '{{ os_bastion }}'
+  loop_control:
+    loop_var: os_instance
+  when:
+    - os_bastion_state is defined
+    - os_mode != 'project'
+  tags: os_bastion
+
+- include: os_tasks_clusters.yml
+  loop: '{{ os_clusters | default ({}) | dict2items }}'
+  loop_control:
+    loop_var: os_cluster
+  when:
+    - os_clusters is defined
+    - os_mode != 'project'
+  tags: os_clusters
+
+- include: os_tasks_instances.yml
+  loop: '{{ os_instances }}'
+  loop_control:
+    loop_var: os_instance
+  when:
+    - os_instances is defined
+    - os_instances | length > 0
+    - os_mode != 'project'
+  tags: os_instances
