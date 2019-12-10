@@ -19,6 +19,24 @@ galaxy_info:
     versions:
     - all
 
-  galaxy_tags: [openstack, projects, instances, network]
+  galaxy_tags:
+  - openstack
+  - project
+  - instance
+  - network
+  - bootstrap
+  - create
+  - volume
+  - tenant
+  - securitygroup
+  - containers
+  - qouta
+  - network
+  - router
+  - subnet
+  - keypair
+  - antyaffinity
+  - userroles
+  - clusters
 
 dependencies: []

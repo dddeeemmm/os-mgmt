@@ -6,7 +6,7 @@
     state: "{{ os_project_state }}"
     validate_certs: '{{ os_validate_certs }}'
     enabled: yes
-  when: os_project_description != ''
+  when: os_project_description | length > 0
 
 - name: '{{ os_project_state }} {{ os_project_name }} project without description'
   os_project:
@@ -15,4 +15,4 @@
     state: "{{ os_project_state }}"
     validate_certs: '{{ os_validate_certs }}'
     enabled: yes
-  when: os_project_description == ''
+  when: os_project_description | lenght = 0

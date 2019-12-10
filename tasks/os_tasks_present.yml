@@ -2,6 +2,7 @@
   when: os_mode != 'instances'
   tags: os_project
 
+
 - name: '{{ os_project_state }} permissions to {{ os_project_name }}'
   os_user_role:
     project: '{{ os_project_name }}'
@@ -9,7 +10,7 @@
     role: '{{ item.role }}'
     validate_certs: '{{ os_validate_certs }}'
   loop:
-    - { group: openstack-admins,          role: admin         }
+    - { group: openstack-admins,          role: admin }
     - { group: openstack-swiftoperators,  role: swiftoperator }
   when:
     - os_mode != 'instances'
@@ -39,7 +40,7 @@
 
     - import_tasks: os_tasks_get_project_id.yml
       tags: os_security_groups
-  
+
     - name: '{{ os_project_state }} network in {{ os_project_name }}'
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
@@ -48,7 +49,7 @@
         project: '{{ os_project_name }}'
         name: '{{ os_project_name }}-net-1'
         validate_certs: '{{ os_validate_certs }}'
-  
+
     - name: '{{ os_project_state }} subnet in {{ os_project_name }}'
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
@@ -124,7 +125,7 @@
 
   when:
     - os_containers is defined
-    - os_containers != ''
+    - os_containers | lenght > 0
     - os_mode != 'instances'
   tags: os_container
 
@@ -140,6 +141,7 @@
     - os_mode != 'project'
   tags: os_bastion
 
+
 - include: os_tasks_clusters.yml
   loop: '{{ os_clusters | default ({}) | dict2items }}'
   loop_control:
@@ -148,6 +150,7 @@
     - os_clusters is defined
     - os_mode != 'project'
   tags: os_clusters
+
 
 - include: os_tasks_instances.yml
   loop: '{{ os_instances }}'
