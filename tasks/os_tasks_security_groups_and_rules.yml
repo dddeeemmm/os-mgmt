@@ -3,17 +3,20 @@
     name: '{{ os_project_name }}-subnet-1'
   register: os_subnet
 
-- set_fact:
+- name: set os_subnet_cidr
+  set_fact:
     os_subnet_cidr: '{{ os_subnet.ansible_facts.openstack_subnets[0].cidr }}'
 
 
 # egress
-- set_fact: os_security_group_name="{{ os_project_name }}-allow-egress"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-allow-egress"
 - import_tasks: os_tasks_security_group.yml
 
 
 # icmp
-- set_fact: os_security_group_name="{{ os_project_name }}-icmp"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-icmp"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -29,8 +32,9 @@
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
-  # ssh
-- set_fact: os_security_group_name="{{ os_project_name }}-ssh"
+# ssh
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-ssh"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -45,8 +49,8 @@
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-
-- set_fact: os_security_group_name="{{ os_project_name }}-ssh-bastion"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-ssh-bastion"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -63,7 +67,8 @@
 
 
 # http
-- set_fact: os_security_group_name="{{ os_project_name }}-http"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-http"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -80,7 +85,8 @@
 
 
 # https
-- set_fact: os_security_group_name="{{ os_project_name }}-https"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-https"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -97,7 +103,8 @@
 
 
 # consul
-- set_fact: os_security_group_name="{{ os_project_name }}-consul"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-consul"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -134,12 +141,14 @@
 
 
 # postgres
-- set_fact: os_security_group_name="{{ os_project_name }}-postgres-client"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-postgres-client"
 - import_tasks: os_tasks_security_group.yml
 - import_tasks: os_tasks_security_group_rule.yml
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-- set_fact: os_security_group_name="{{ os_project_name }}-postgres"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-postgres"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -159,7 +168,8 @@
 
 
 # patroni
-- set_fact: os_security_group_name="{{ os_project_name }}-patroni"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-patroni"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -176,7 +186,8 @@
 
 
 # netdata
-- set_fact: os_security_group_name="{{ os_project_name }}-netdata"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-netdata"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -193,7 +204,8 @@
 
 
 # rabbit
-- set_fact: os_security_group_name="{{ os_project_name }}-rabbit"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-rabbit"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -224,7 +236,8 @@
 
 
 # puma
-- set_fact: os_security_group_name="{{ os_project_name }}-puma"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-puma"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -241,7 +254,8 @@
 
 
 # redis
-- set_fact: os_security_group_name="{{ os_project_name }}-redis"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-redis"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -261,7 +275,8 @@
 
 
 # redis-sentinel
-- set_fact: os_security_group_name="{{ os_project_name }}-redis-sentinel"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-redis-sentinel"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -281,7 +296,8 @@
 
 
 # mongo
-- set_fact: os_security_group_name="{{ os_project_name }}-mongo"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-mongo"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -302,7 +318,8 @@
 
 
 # elastic-server
-- set_fact: os_security_group_name="{{ os_project_name }}-elastic-server"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-elastic-server"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -319,7 +336,8 @@
 
 
 # zookeeper
-- set_fact: os_security_group_name="{{ os_project_name }}-zookeeper"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-zookeeper"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -345,7 +363,8 @@
 
 
 # k8s
-- set_fact: os_security_group_name="{{ os_project_name }}-k8s"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-k8s"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -371,7 +390,8 @@
 
 
 # gitlab runners
-- set_fact: os_security_group_name="{{ os_project_name }}-glrunner"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-glrunner"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -391,7 +411,8 @@
 
 
 # rsync
-- set_fact: os_security_group_name="{{ os_project_name }}-rsync"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-rsync"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -408,7 +429,8 @@
 
 
 # clickhouse
-- set_fact: os_security_group_name="{{ os_project_name }}-clickhouse"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-clickhouse"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -428,7 +450,8 @@
 
 
 # vault
-- set_fact: os_security_group_name="{{ os_project_name }}-vault"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-vault"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -448,7 +471,8 @@
 
 
 # java spring boot
-- set_fact: os_security_group_name="{{ os_project_name }}-java-spring-boot"
+- name: set os_security_group_name
+  set_fact: os_security_group_name="{{ os_project_name }}-java-spring-boot"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
@@ -468,7 +492,8 @@
 
 
 # zabbix
-- set_fact: os_security_group_name='{{ os_project_name }}-zabbix'
+- name: set os_security_group_name
+  set_fact: os_security_group_name='{{ os_project_name }}-zabbix'
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml

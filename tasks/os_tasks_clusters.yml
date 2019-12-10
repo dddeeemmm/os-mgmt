@@ -119,7 +119,8 @@
       - anti-affinity
   register: os_anti_affinity_group_id
 
-- set_fact:
+- name: set os_anti_affinity_group_id
+  set_fact:
     os_anti_affinity_group_id: '{{ os_anti_affinity_group_id.server_group.id }}'
   when: os_cluster_state != 'absent'
 
