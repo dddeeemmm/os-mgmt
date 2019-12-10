@@ -120,7 +120,7 @@
         validate_certs: '{{ os_validate_certs }}'
       when: os_instance_state == 'present'
 
-    - name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }} with /dev/sda:{{ os_instance_volume }}GB /dev/sdb:{{ os_instance_volume_advanced }}GB'
+    - name: '{{ os_instance_state }} {{ os_instance_name }} with /dev/sda:{{ os_instance_volume }}GB /dev/sdb:{{ os_instance_volume_advanced }}GB'
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
       vars:

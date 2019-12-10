@@ -138,7 +138,7 @@
     with_sequence: count='{{ os_cluster_vm_count }}'
     when: os_cluster_state == 'present'
 
-  - name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }} with /dev/sda:{{ os_cluster_volume }}GB /dev/sdb:{{ os_cluster_volume_advanced }}GB'
+  - name: '{{ os_cluster_state }} {{ os_cluster.key }} with /dev/sda:{{ os_cluster_volume }}GB /dev/sdb:{{ os_cluster_volume_advanced }}GB'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
     vars:

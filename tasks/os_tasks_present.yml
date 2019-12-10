@@ -40,7 +40,7 @@
 
     - import_tasks: os_tasks_get_project_id.yml
       tags: os_security_groups
-  
+
     - name: '{{ os_project_state }} network in {{ os_project_name }}'
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
@@ -125,7 +125,7 @@
 
   when:
     - os_containers is defined
-    - os_containers != ''
+    - os_containers | lenght > 0
     - os_mode != 'instances'
   tags: os_container
 
