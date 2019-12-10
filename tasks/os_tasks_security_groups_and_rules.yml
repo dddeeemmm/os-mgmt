@@ -1,5 +1,5 @@
-# get os_subnet_cidr
-- os_subnets_facts:
+- name: get os_subnet_cidr
+  os_subnets_facts:
     name: '{{ os_project_name }}-subnet-1'
   register: os_subnet
 
@@ -17,7 +17,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: 0.0.0.0/0
       port_range_min: -1
@@ -26,14 +27,15 @@
       protocol: icmp
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-  
-  
-# ssh
+
+
+  # ssh
 - set_fact: os_security_group_name="{{ os_project_name }}-ssh"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: 0.0.0.0/0
       port_range_min: 22
@@ -42,12 +44,14 @@
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-  
+
+
 - set_fact: os_security_group_name="{{ os_project_name }}-ssh-bastion"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_project_name }}-ssh"
       port_range_min: 22
@@ -63,7 +67,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: 0.0.0.0/0
       port_range_min: 80
@@ -79,7 +84,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: 0.0.0.0/0
       port_range_min: 443
@@ -95,7 +101,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: "{{ item.port }}"
@@ -111,7 +118,8 @@
     - { port: 8302, protocol: udp }
     - { port: 8600, protocol: tcp }
     - { port: 8600, protocol: udp }
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: 0.0.0.0/0
       port_range_min: "{{ item.port }}"
@@ -135,7 +143,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ item }}"
       port_range_min: 5432
@@ -154,7 +163,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: 8008
@@ -163,14 +173,15 @@
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-  
+
 
 # netdata
 - set_fact: os_security_group_name="{{ os_project_name }}-netdata"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: '{{ os_subnet_cidr }}'  # prometheus-server
       port_range_min: 19999
@@ -179,14 +190,15 @@
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-  
-  
+
+
 # rabbit
 - set_fact: os_security_group_name="{{ os_project_name }}-rabbit"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ item }}"
       port_range_min: 5671
@@ -196,7 +208,8 @@
       validate_certs: '{{ os_validate_certs }}'
     with_items:
     - '{{ os_subnet_cidr }}'
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: "{{ item }}"
@@ -215,7 +228,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "3000"
@@ -231,7 +245,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "{{ item }}"
@@ -250,7 +265,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "{{ item }}"
@@ -262,14 +278,15 @@
     - 6379
     - 26379
   when: os_project_state == 'present' and os_security_group_modify.changed
- 
+
 
 # mongo
 - set_fact: os_security_group_name="{{ os_project_name }}-mongo"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "{{ item }}"
@@ -289,7 +306,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: 9200
@@ -305,7 +323,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: 2181
@@ -313,7 +332,8 @@
       direction: ingress
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       port_range_min: 2888
       port_range_max: 2888
@@ -329,7 +349,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       port_range_min: 1
       port_range_max: 65535
@@ -337,7 +358,8 @@
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
       remote_group: "{{ os_security_group_name }}"
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       port_range_min: 1
       port_range_max: 65535
@@ -347,13 +369,14 @@
       remote_group: "{{ os_security_group_name }}"
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-  
+
 # gitlab runners
 - set_fact: os_security_group_name="{{ os_project_name }}-glrunner"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "{{ item }}"
@@ -372,7 +395,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: 22
@@ -381,14 +405,15 @@
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-  
-  
+
+
 # clickhouse
 - set_fact: os_security_group_name="{{ os_project_name }}-clickhouse"
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: "{{ item }}"
@@ -407,7 +432,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_group: "{{ os_security_group_name }}"
       port_range_min: "{{ item }}"
@@ -426,7 +452,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: "{{ os_security_group_name }}"
       remote_ip_prefix: "{{ os_subnet_cidr }}"
       port_range_min: "{{ item }}"
@@ -445,7 +472,8 @@
 - import_tasks: os_tasks_security_group.yml
 - block:
   - import_tasks: os_tasks_security_group_rule.yml
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: '{{ os_security_group_name }}'
       remote_ip_prefix: '{{ os_subnet_cidr }}'  # zabbix-server
       port_range_min: 10050
@@ -453,7 +481,8 @@
       direction: ingress
       protocol: tcp
       validate_certs: '{{ os_validate_certs }}'
-  - os_security_group_rule:
+  - name: set rules {{ os_security_group_name }}
+    os_security_group_rule:
       security_group: '{{ os_security_group_name }}'
       port_range_min: 10050
       port_range_max: 10051
