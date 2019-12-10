@@ -93,7 +93,7 @@ Example Run
 License
 -------
 
-    BSD
+    GLP
 
 
 Author Information
