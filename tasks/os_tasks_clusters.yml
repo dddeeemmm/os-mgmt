@@ -7,7 +7,6 @@
     set_fact:
       os_cluster_vm_count: 3
 
-
 - block:
   - name: get cluster '{{ os_cluster.key }}' img
     set_fact:
@@ -21,7 +20,6 @@
     - name: set cluster '{{ os_cluster.key }}' image to 'ubuntu'
       set_fact:
         os_cluster_image: '{{ ubuntu }}'
-    
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' fv
@@ -36,7 +34,6 @@
     - name: set cluster '{{ os_cluster.key }}' flavor to '{{ fv_default }}'
       set_fact:
         os_cluster_flavor: '{{ fv_default }}'
-      
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' gr
@@ -51,8 +48,7 @@
     - name: set cluster '{{ os_cluster.key }}' groups to '{{ os_cluster.key }}'
       set_fact:
         os_cluster_groups: '{{ os_cluster.key }}'
-  
-  
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' state
     set_fact:
@@ -61,8 +57,7 @@
   - name: set cluster '{{ os_cluster.key }}' state to 'present'
     set_fact:
       os_cluster_state: 'present'
- 
-  
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' sg
     set_fact:
@@ -76,8 +71,7 @@
     - name: set cluster '{{ os_cluster.key }}' security groups to '{{ sg_default }}'
       set_fact:
         os_cluster_security_groups: '{{ sg_default }}'
-  
-  
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' volume size
     set_fact:
@@ -87,7 +81,6 @@
     set_fact:
       os_cluster_volume: unset
 
-
 - block:
   - name: set cluster '{{ os_cluster.key }}' advanced volume size
     set_fact:
@@ -96,7 +89,6 @@
   - name: unset cluster '{{ os_cluster.key }}' advanced volume size
     set_fact:
       os_cluster_volume_advanced: unset
-    
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' user
@@ -111,8 +103,7 @@
     set_fact:
       os_cluster_user: centos
     when: os_cluster_image is search 'centos'
-  
-  
+
 - import_tasks: os_tasks_get_project_id.yml
 
 - name: '{{ os_cluster_state }} anti-affinity group {{ os_project_name }}-{{ os_cluster.key }} in {{ os_project_name }}'
@@ -145,7 +136,7 @@
       validate_certs: '{{ os_validate_certs }}'
     with_sequence: count='{{ os_cluster_vm_count }}'
     when: os_cluster_state == 'present'
-    
+
   - name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }} with /dev/sda:{{ os_cluster_volume }}GB /dev/sdb:{{ os_cluster_volume_advanced }}GB'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
@@ -175,7 +166,7 @@
         hostname: '{{ os_cluster.key }}-{{ item }}'
         ansible_user: '{{ os_cluster_user }}'
     with_sequence: count='{{ os_cluster_vm_count }}'
-    
+
   - name: absent advanced volumes '{{ os_cluster.key }}'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
@@ -192,7 +183,7 @@
 
 
 - block:
-  
+
   - name: present advanced volumes '{{ os_cluster.key }}'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
@@ -203,7 +194,7 @@
       validate_certs: '{{ os_validate_certs }}'
     with_sequence: count='{{ os_cluster_vm_count }}'
     when: os_cluster_state == 'present'
-    
+
   - name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }} with /dev/sdb:{{ os_cluster_volume_advanced }}GB'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
@@ -232,7 +223,7 @@
         hostname: '{{ os_cluster.key }}-{{ item }}'
         ansible_user: '{{ os_cluster_user }}'
     with_sequence: count='{{ os_cluster_vm_count }}'
-    
+
   - name: absent advanced volumes '{{ os_cluster.key }}'
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
@@ -243,7 +234,7 @@
       validate_certs: '{{ os_validate_certs }}'
     with_sequence: count='{{ os_cluster_vm_count }}'
     when: os_cluster_state == 'absent'
-    
+
   when:
     - os_cluster_volume_advanced is defined and os_cluster_volume_advanced != 'unset'
     - os_cluster_volume is undefined or os_cluster_volume == 'unset'

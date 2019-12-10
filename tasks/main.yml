@@ -2,7 +2,7 @@
 # tasks file for os_mgmt
 
 - block:
-    
+
     - block:
       - set_fact:
           os_username: '{{ ansible_env.OS_USERNAME }}'
@@ -13,8 +13,7 @@
         register: result
       - set_fact:
           os_username: '{{ result.user_input }}'
-    
-    
+
     - block:
       - set_fact:
           os_password: '{{ ansible_env.OS_PASSWORD }}'
@@ -25,12 +24,11 @@
         register: result
       - set_fact:
           os_password: '{{ result.user_input }}'
-    
-    
+
     - block:
       - set_fact:
           os_project_name: '{{ ansible_env.OS_PROJECT_NAME }}'
-        when: os_project_name == ''
+        when: os_project_name is not defined
       rescue:
       - set_fact:
           os_project_name: '{{ os_project_name_default }}'
@@ -40,65 +38,58 @@
         register: result
       - set_fact:
           os_project_name: '{{ result.user_input }}'
-      
-    
+
     - block:
       - set_fact:
           os_project_id: '{{ ansible_env.OS_PROJECT_ID }}'
       rescue:
       - set_fact:
           os_project_id: '{{ os_project_id_default }}'
-      
-    
+
     - block:
       - set_fact:
           os_user_domain_name: '{{ ansible_env.OS_USER_DOMAIN_NAME }}'
       rescue:
       - set_fact:
           os_user_domain_name: '{{ os_user_domain_name_default }}'
-      
-    
+
     - block:
       - set_fact:
           os_auth_url: '{{ ansible_env.OS_AUTH_URL }}'
       rescue:
       - set_fact:
           os_auth_url: '{{ os_auth_url_default }}'
-    
-    
+
     - block:
       - set_fact:
           os_identity_api_version: '{{ ansible_env.OS_IDENTITY_API_VERSION }}'
       rescue:
       - set_fact:
           os_identity_api_version: '{{ os_identity_api_version_default }}'
-      
-    
+
     - block:
       - set_fact:
           os_project_domain_id: '{{ ansible_env.OS_PROJECT_DOMAIN_ID }}'
       rescue:
       - set_fact:
           os_project_domain_id: '{{ os_project_domain_id_default }}'
-      
-    
+
     - block:
       - set_fact:
           os_region_name: '{{ ansible_env.OS_REGION_NAME }}'
       rescue:
       - set_fact:
           os_region_name: '{{ os_region_name_default }}'
-      
-    
+
     - block:
       - set_fact:
           os_interface: '{{ ansible_env.OS_INTERFACE }}'
       rescue:
       - set_fact:
           os_interface: '{{ os_interface_default }}'
-  
+
   tags: always
-  
+
 
 - import_tasks: os_tasks_present.yml
   environment:
@@ -113,18 +104,19 @@
     OS_REGION_NAME: '{{ os_region_name }}'
     OS_INTERFACE: '{{ os_interface }}'
   when: os_project_state == 'present'
-  
+
 
 - block:
-  
-  - pause:
+
+  - name: '{{ os_project_state }} {{ os_project_name }}'
+    pause:
       prompt: Please enter OpenStack Project Name ({{ os_project_name }}) to DELETE it
       echo: yes
     register: result
-    
+
   - meta: end_play
     when: os_project_name != result.user_input
-    
+
   - import_tasks: os_tasks_absent.yml
     environment:
       OS_USERNAME: '{{ os_username }}'
@@ -138,16 +130,5 @@
       OS_REGION_NAME: '{{ os_region_name }}'
       OS_INTERFACE: '{{ os_interface }}'
     when: os_project_name == result.user_input
-    
+
   when: os_project_state == 'absent'
-  
-  
-#  TODO
-- block:
-  - import_tasks: os_tasks_absent.yml
-    vars:
-      os_project_state: absent
-  - import_tasks: os_tasks_present.yml
-    vars:
-      os_project_state: present
-  when: os_project_state == 'recreate'
