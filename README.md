@@ -1,7 +1,7 @@
 Role Name
 =========
 
-	os_mgmt
+	os-mgmt
     # Manage OpenStack Projects, Instances and many more
 
 Requirements
