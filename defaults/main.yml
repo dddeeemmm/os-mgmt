@@ -1,5 +1,5 @@
 ---
-# defaults file for os_mgmt
+# defaults file for os-mgmt
 
 # OpenStack variables for any existing 'default project' where user is have admin role
 # this needed for non use `source openrc.sh`
