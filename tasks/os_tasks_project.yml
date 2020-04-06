@@ -1,3 +1,5 @@
+---
+
 - name: '{{ os_project_state }} {{ os_project_name }} project with description'
   os_project:
     name: "{{ os_project_name }}"

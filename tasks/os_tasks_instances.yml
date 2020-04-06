@@ -1,3 +1,5 @@
+---
+
 - block:
   - name: get instance '{{ os_instance_name | default ('instance') }}' name
     set_fact:
@@ -7,6 +9,7 @@
     set_fact:
       os_instance_name: instance
 
+
 - block:
   - name: get instance '{{ os_instance_name }}' state
     set_fact:
@@ -15,6 +18,7 @@
   - name: set instance '{{ os_instance_name }}' state to 'present'
     set_fact:
       os_instance_state: present
+
 
 - block:
   - name: get instance '{{ os_instance_name }}' img
@@ -30,6 +34,7 @@
       set_fact:
         os_instance_image: '{{ ubuntu }}'
 
+
 - block:
   - name: get instance '{{ os_instance_name }}' fv
     set_fact:
@@ -43,6 +48,7 @@
     - name: set instance '{{ os_instance_name }}' flavor to '{{ fv_default }}'
       set_fact:
         os_instance_flavor: '{{ fv_default }}'
+
 
 - block:
   - name: get instance '{{ os_instance_name }}' gr
@@ -58,6 +64,7 @@
       set_fact:
         os_instance_groups: '{{ os_instance_name }}'
 
+
 - block:
   - name: get instance {{ os_instance_name }} sg
     set_fact:
@@ -72,6 +79,7 @@
       set_fact:
         os_instance_security_groups: '{{ sg_default }}'
 
+
 - block:
   - name: set instance '{{ os_instance_name }}' volume size
     set_fact:
@@ -81,6 +89,7 @@
     set_fact:
       os_instance_volume: unset
 
+
 - block:
   - name: set instance '{{ os_instance_name }}' advanced volume size
     set_fact:
@@ -89,6 +98,7 @@
   - name: unset instance '{{ os_instance_name }}' advanced volume size
     set_fact:
       os_instance_volume_advanced: unset
+
 
 - block:
   - name: get instance '{{ os_instance_name }}' user

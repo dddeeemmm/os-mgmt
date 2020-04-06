@@ -1,38 +1,51 @@
 ---
 # vars file for os_mgmt
 
-
 # Images
-
 centos: centos-7-1901
 ubuntu: ubuntu-1604-20180713
-
 
 # Flavors
 fv_default: m1.small
 
+# Quotas
+os_quota_security_group_rule: 100
+os_quota_security_group: 100
+os_quota_ram: 1024000
+
+# Rights
+os_group_role:
+  - { group: openstack-admins,          role: admin         }
+  - { group: openstack-swiftoperators,  role: swiftoperator }
 
 # SecurityGroups
+sg_bastion:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix' ]
+sg_default:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul' ]
+sg_consul:               [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul' ]
+sg_web:                  [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-http', '{{ os_project_name }}-https' ]
+sg_redis:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-redis' ]
+sg_redis_sentinel:       [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-redis-sentinel' ]
+sg_rabbitmq:             [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-rabbit' ]
+sg_puma:                 [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-puma', '{{ os_project_name }}-http', '{{ os_project_name }}-https' ]
+sg_mongo:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-mongo' ]
+sg_postgres:             [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-postgres' ]
+sg_postgres_patroni:     [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-postgres', '{{ os_project_name }}-patroni' ]
+sg_patroni:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-patroni' ]
+sg_web_postgres:         [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-http', '{{ os_project_name }}-https', '{{ os_project_name }}-postgres' ]
+sg_elastic_server:       [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-elastic-server' ]
+sg_zookeeper:            [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-zookeeper' ]
+sg_k8s_master:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-k8s-master' ]
+sg_k8s_worker:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-k8s-worker' ]
+sg_gl_runner:            [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-glrunner' ]
+sg_clickhouse:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-clickhouse' ]
+sg_vault:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-vault' ]
+sg_java_spring:          [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-java-spring-boot', '{{ os_project_name }}-http', '{{ os_project_name }}-https', '{{ os_project_name }}-postgres-client' ]
+sg_zabbix:               [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-zabbix' ]
 
-sg_bastion:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix' ]
-sg_default:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul' ]
-sg_consul:               [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul' ]
-sg_web:                  [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-http', '{{ os_project_name }}-https' ]
-sg_redis:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-redis' ]
-sg_redis_sentinel:       [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-redis-sentinel' ]
-sg_rabbitmq:             [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-rabbit' ]
-sg_puma:                 [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-puma', '{{ os_project_name }}-http', '{{ os_project_name }}-https' ]
-sg_mongo:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-mongo' ]
-sg_postgres:             [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-postgres' ]
-sg_postgres_patroni:     [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-postgres', '{{ os_project_name }}-patroni' ]
-sg_patroni:              [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-patroni' ]
-sg_web_postgres:         [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-http', '{{ os_project_name }}-https', '{{ os_project_name }}-postgres' ]
-sg_elastic_server:       [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-elastic-server' ]
-sg_zookeeper:            [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-zookeeper' ]
-sg_k8s_master:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-k8s-master' ]
-sg_k8s_worker:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-k8s-worker' ]
-sg_gl_runner:            [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-glrunner' ]
-sg_clickhouse:           [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-clickhouse' ]
-sg_vault:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-vault' ]
-sg_java_spring:          [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-java-spring-boot', '{{ os_project_name }}-http', '{{ os_project_name }}-https', '{{ os_project_name }}-postgres-client' ]
-sg_zabbix:               [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-allow-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-zabbix' ]
+# Networks with masks
+os_openstack_cidr:
+os_office_cidr:
+os_vpn_cidr:
+zabbix_server_ip:
+prometheus_ip:
+mgmt_vm_ip:

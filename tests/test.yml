@@ -4,8 +4,8 @@
   gather_facts: yes
 
   vars:
-  
-    os_mode: instances                                  # [not required] instances | project | (or leave blank for full deploy)
+
+    os_mode: instances                                  # [required] instances | project | qouta | keypair | container | network | sg | bastion | clusters | all
     
     os_project_state: present                           # [default: present] present | absent (create or destroy you work OpenStack project)
     
@@ -14,9 +14,9 @@
 
     os_bastion_state: present                           # [not required] present | absent (deploy {{ os_bastion }} instance)
 
-    os_containers:                                      # [not required] containers in project
-    - documents
-    - documents-history
+    os_containers:                                      # [not required] create containers in project
+      - documents
+      - documents-history
 
     os_instances:                                       # [not required] instances of project
         - { state: present,                             # [default: present] present | absent
@@ -29,7 +29,7 @@
             user: root,                                 # [default: centos || ubuntu (according on image name)] system user
             gr: 'web' }                                 # [not required] groups in metadata
         - { name: instance-2 }                          # simple as possible
-        
+
     os_clusters:                                        # [not required] dict clusters of project
       a-cluster:                                        # [required] name of cluster instances: a-cluster-[1:5]
         - { state: present,                             # [default: present] present | absent
@@ -43,7 +43,6 @@
             gr: 'web' }                                 # [not required] groups in metadata
       b-cluster:                                        # [required] name of cluster instances: a-cluster-[1:3]
         - { state: present }                            # simple as possible
-      
 
   roles:
   - { role: os_mgmt, tags: os_mgmt }

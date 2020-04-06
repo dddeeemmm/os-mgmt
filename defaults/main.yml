@@ -8,7 +8,7 @@
 
 #os_username_default:                                  # will be asked interactively if not set or blank
 #os_password_default:                                  # will be asked interactively if not set or blank
-os_project_name_default:
+#os_project_name_default:                              # will be asked interactively if not set or blank
 os_project_id_default:
 os_project_domain_id_default:
 os_auth_url_default:
@@ -20,7 +20,7 @@ os_identity_api_version_default:
 
 # Role options
 
-os_mode: instances                                     # [instances | project] or leave blank for work project and instances together
+os_mode: instances                                     # [instances | project | roles | qouta | keypair | container | network | sg | bastion | clusters | all]
 ansible_connection: local
 ansible_python_interpretator: /usr/bin/python3
 os_validate_certs: no                                  # validate OpenStack certificate

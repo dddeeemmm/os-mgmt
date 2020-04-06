@@ -1,3 +1,5 @@
+---
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' vm count
     set_fact:
@@ -6,6 +8,7 @@
   - name: set cluster '{{ os_cluster.key }}' vm count to '3'
     set_fact:
       os_cluster_vm_count: 3
+
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' img
@@ -21,6 +24,7 @@
       set_fact:
         os_cluster_image: '{{ ubuntu }}'
 
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' fv
     set_fact:
@@ -34,6 +38,7 @@
     - name: set cluster '{{ os_cluster.key }}' flavor to '{{ fv_default }}'
       set_fact:
         os_cluster_flavor: '{{ fv_default }}'
+
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' gr
@@ -49,6 +54,7 @@
       set_fact:
         os_cluster_groups: '{{ os_cluster.key }}'
 
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' state
     set_fact:
@@ -57,6 +63,7 @@
   - name: set cluster '{{ os_cluster.key }}' state to 'present'
     set_fact:
       os_cluster_state: 'present'
+
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' sg
@@ -72,6 +79,7 @@
       set_fact:
         os_cluster_security_groups: '{{ sg_default }}'
 
+
 - block:
   - name: get cluster '{{ os_cluster.key }}' volume size
     set_fact:
@@ -81,6 +89,7 @@
     set_fact:
       os_cluster_volume: unset
 
+
 - block:
   - name: set cluster '{{ os_cluster.key }}' advanced volume size
     set_fact:
@@ -89,6 +98,7 @@
   - name: unset cluster '{{ os_cluster.key }}' advanced volume size
     set_fact:
       os_cluster_volume_advanced: unset
+
 
 - block:
   - name: get cluster '{{ os_cluster.key }}' user
@@ -103,6 +113,7 @@
     set_fact:
       os_cluster_user: centos
     when: os_cluster_image is search 'centos'
+
 
 - import_tasks: os_tasks_get_project_id.yml
 
