@@ -11,8 +11,7 @@
     group: '{{ item.group }}'
     role: '{{ item.role }}'
     validate_certs: '{{ os_validate_certs }}'
-  loop:
-    - '{{ os_group_roles }}'
+  loop: '{{ os_group_roles }}'
   when:
     - os_mode == 'project' or os_mode == 'roles' or os_mode == 'all'
   tags: os_user_groups
