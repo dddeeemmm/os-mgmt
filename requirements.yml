@@ -1,6 +1,6 @@
 ---
 
-# consul
+# os_mgmt
 - src: git@github.com:dddeeemmm/os_mgmt.git
   scm: git
   name: os_mgmt
