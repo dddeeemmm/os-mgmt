@@ -1,3 +1,5 @@
+---
+
 - include: os_tasks_instances.yml
   vars:
     os_instance_state: absent
@@ -6,8 +8,8 @@
     loop_var: os_instance
   when:
     - os_instances is defined
-    - os_instances | length > 0
-    - os_mode != 'project'
+    - os_instances != ''
+    - os_mode == 'instances' or os_mode== 'all'
   tags: os_instances
 
 - include: os_tasks_clusters.yml
@@ -18,7 +20,8 @@
     loop_var: os_cluster
   when:
     - os_clusters is defined
-    - os_mode != 'project'
+    - os_clusters != ''
+    - os_mode == 'instances' or os_mode == 'clusters' or os_mode == 'all'
   tags: os_clusters
 
 - include: os_tasks_instances.yml
@@ -28,8 +31,7 @@
   loop_control:
     loop_var: os_instance
   when:
-    - os_bastion_state is defined
-    - os_mode != 'project'
+    - (os_bastion_state is defined and os_mode == 'instances') or os_mode == 'bastion' or os_mode == 'all'
   tags: os_bastion
 
 
@@ -39,7 +41,7 @@
     import_tasks: os_tasks_security_groups_and_rules.yml
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
-    when: os_mode != 'instances'
+    when: os_mode == 'project' or os_mode == 'sg' or os_mode == 'all'
   tags: [ os_security_groups, os_sg ]
 
 
@@ -54,8 +56,8 @@
         container: '{{ item }}'
       loop: '{{ os_containers }}'
   when:
-    - os_containers
-    - os_mode != 'instances'
+    - os_clusters is defined and os_clusters != ''
+    - os_mode == 'instances' or os_mode == 'container' or os_mode == 'all'
   tags: os_container
 
 
@@ -97,7 +99,7 @@
         project: '{{ os_project_name }}'
         validate_certs: '{{ os_validate_certs }}'
 
-  when: os_mode != 'instances'
+  when: os_mode == 'project' or os_mode == 'network' or os_mode == 'all'
   tags: os_network
 
 
@@ -110,7 +112,7 @@
         state: '{{ os_project_state }}'
         name: '{{ os_project_name }}-main-keypair'
         validate_certs: '{{ os_validate_certs }}'
-  when: os_mode != 'instances'
+  when: os_mode == 'project' or os_mode == 'keypair' or os_mode == 'all'
   tags: os_keypair
 
 
@@ -118,5 +120,5 @@
   import_tasks: os_tasks_project.yml
   environment:
     OS_PROJECT_ID: '{{ os_project_id }}'
-  when: os_mode != 'instances'
+  when: os_mode == 'project' or os_mode == 'all'
   tags: os_project

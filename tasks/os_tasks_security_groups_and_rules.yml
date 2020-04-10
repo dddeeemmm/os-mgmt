@@ -1,518 +1,576 @@
-- name: get os_subnet_cidr
-  os_subnets_facts:
-    name: '{{ os_project_name }}-subnet-1'
-  register: os_subnet
+---
 
-- name: set os_subnet_cidr
-  set_fact:
-    os_subnet_cidr: '{{ os_subnet.ansible_facts.openstack_subnets[0].cidr }}'
+# get os_subnet_cidr
+- os_subnets_facts:
+    name: '{{ os_project_name }}-subnet-1'
+  register: os_subnets_info
+
+- set_fact:
+    os_subnet_cidr: '{{ os_subnets_info.ansible_facts.openstack_subnets[0].cidr }}'
 
 
 # egress
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-allow-egress"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-egress'
 - import_tasks: os_tasks_security_group.yml
 
+
+# ingress
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ingress'
+- import_tasks: os_tasks_security_group.yml
+- block:
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: 0.0.0.0/0
+        port_range_min: 1
+        port_range_max: 65535
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+  when: os_project_state == 'present' and os_security_group_modify.changed
+  
 
 # icmp
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-icmp"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-icmp'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: 0.0.0.0/0
-      port_range_min: -1
-      port_range_max: -1
-      direction: ingress
-      protocol: icmp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: 0.0.0.0/0
+        port_range_min: -1
+        port_range_max: -1
+        direction: ingress
+        protocol: icmp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-
-
+  
+  
 # ssh
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-ssh"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ssh'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: 0.0.0.0/0
-      port_range_min: 22
-      port_range_max: 22
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ item }}'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-ssh-bastion"
+  
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ssh-bastion'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_project_name }}-ssh"
-      port_range_min: 22
-      port_range_max: 22
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ os_project_name }}-ssh'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ssh-tower'
+- import_tasks: os_tasks_security_group.yml
+- block:
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ tower_ip }}'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+  when: os_project_state == 'present' and os_security_group_modify.changed
+  
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ssh-mgmt'
+- import_tasks: os_tasks_security_group.yml
+- block:
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ mgmt_vm_ip }}'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+  when: os_project_state == 'present' and os_security_group_modify.changed
+  
+  
 # http
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-http"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-http'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: 0.0.0.0/0
-      port_range_min: 80
-      port_range_max: 80
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ item }}'
+        port_range_min: 80
+        port_range_max: 80
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # https
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-https"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-https'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: 0.0.0.0/0
-      port_range_min: 443
-      port_range_max: 443
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ item }}'
+        port_range_min: 443
+        port_range_max: 443
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # consul
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-consul"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-consul'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: "{{ item.port }}"
-      port_range_max: "{{ item.port }}"
-      direction: ingress
-      validate_certs: '{{ os_validate_certs }}'
-      protocol: "{{ item.protocol }}"
-    with_items:
-    - { port: 8300, protocol: tcp }
-    - { port: 8301, protocol: tcp }
-    - { port: 8301, protocol: udp }
-    - { port: 8302, protocol: tcp }
-    - { port: 8302, protocol: udp }
-    - { port: 8600, protocol: tcp }
-    - { port: 8600, protocol: udp }
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: 0.0.0.0/0
-      port_range_min: "{{ item.port }}"
-      port_range_max: "{{ item.port }}"
-      direction: ingress
-      validate_certs: '{{ os_validate_certs }}'
-      protocol: "{{ item.protocol }}"
-    with_items:
-    - { port: 8500, protocol: tcp }
-    - { port: 8501, protocol: tcp }
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+  #      remote_group: "{{ os_security_group_name }}"
+        remote_ip_prefix: '{{ item.cidr }}'
+        port_range_min: '{{ item.port }}'
+        port_range_max: '{{ item.port }}'
+        direction: ingress
+        validate_certs: '{{ os_validate_certs }}'
+        protocol: "{{ item.protocol }}"
+      with_items:
+      - { cidr: '{{ os_subnet_cidr }}',     port: 8300, protocol: tcp     }
+      - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: tcp     }
+      - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: udp     }
+      - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: tcp     }
+      - { cidr: '{{ os_ovirt_cidr }}',      port: 8302, protocol: tcp     }
+      - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: udp     }
+      - { cidr: '{{ os_ovirt_cidr }}',      port: 8302, protocol: udp     }
+      - { cidr: '{{ os_office_cidr }}',     port: 8500, protocol: tcp     }
+      - { cidr: '{{ os_vpn_cidr }}',        port: 8500, protocol: tcp     }
+      - { cidr: '{{ os_office_cidr }}',     port: 8501, protocol: tcp     }
+      - { cidr: '{{ os_vpn_cidr }}',        port: 8501, protocol: tcp     }
+      - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: tcp     }
+      - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: udp     }
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # postgres
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-postgres-client"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-postgres-client'
 - import_tasks: os_tasks_security_group.yml
 - import_tasks: os_tasks_security_group_rule.yml
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-postgres"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-postgres'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ item }}"
-      port_range_min: 5432
-      port_range_max: 5432
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - "{{ os_security_group_name }}"
-    - "{{ os_project_name }}-postgres-client"
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ item }}'
+        port_range_min: 5432
+        port_range_max: 5432
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_security_group_name }}'
+        - '{{ os_project_name }}-postgres-client'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # patroni
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-patroni"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-patroni'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: 8008
-      port_range_max: 8008
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+#        remote_group: "{{ os_security_group_name }}"
+        port_range_min: 8008
+        port_range_max: 8008
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-
+  
 
 # netdata
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-netdata"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-netdata'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: '{{ os_subnet_cidr }}'  # prometheus-server
-      port_range_min: 19999
-      port_range_max: 19999
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ prometheus_ip }}'
+        port_range_min: 19999
+        port_range_max: 19999
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-
-
+  
+  
 # rabbit
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-rabbit"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-rabbit'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ item }}"
-      port_range_min: 5671
-      port_range_max: 5672
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - '{{ os_subnet_cidr }}'
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 4369
-    - 25672
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ item }}'
+        port_range_min: 5671
+        port_range_max: 5672
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_openstack_cidr }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ os_security_group_name }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 4369
+        - 25672
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # puma
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-puma"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-puma'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "3000"
-      port_range_max: "3000"
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-      direction: ingress
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: 3000
+        port_range_max: 3000
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        direction: ingress
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # redis
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-redis"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-redis'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 6379
-    - 6380
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 6379
+        - 6380
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # redis-sentinel
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-redis-sentinel"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-redis-sentinel'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 6379
-    - 26379
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 6379
+        - 26379
   when: os_project_state == 'present' and os_security_group_modify.changed
-
+ 
 
 # mongo
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-mongo"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-mongo'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 27017
-    - 27018
-    - 27019
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 27017
+        - 27018
+        - 27019
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # elastic-server
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-elastic-server"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-elastic-server'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: 9200
-      port_range_max: 9200
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: 9200
+        port_range_max: 9200
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # zookeeper
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-zookeeper"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-zookeeper'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: 2181
-      port_range_max: 2181
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      port_range_min: 2888
-      port_range_max: 2888
-      remote_group: "{{ os_security_group_name }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: 2181
+        port_range_max: 2181
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+    - os_security_group_rule:
+        security_group: "{{ os_security_group_name }}"
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        remote_group: "{{ os_security_group_name }}"
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 3888
+        - 2888
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # k8s
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-k8s"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-k8s'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      port_range_min: 1
-      port_range_max: 65535
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-      remote_group: "{{ os_security_group_name }}"
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      port_range_min: 1
-      port_range_max: 65535
-      direction: ingress
-      protocol: udp
-      validate_certs: '{{ os_validate_certs }}'
-      remote_group: "{{ os_security_group_name }}"
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 1
+        port_range_max: 65535
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_group: '{{ os_security_group_name }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 1
+        port_range_max: 65535
+        direction: ingress
+        protocol: udp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_group: '{{ os_security_group_name }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 6443
+        port_range_max: 6443
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_ip_prefix: '{{ item }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
+        - '{{ os_subnet_cidr }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
 
-
+  
 # gitlab runners
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-glrunner"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-glrunner'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 443
-    - 2811
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_ovirt_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 443
+        - 2811
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # rsync
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-rsync"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-rsync'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: 22
-      port_range_max: 22
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ os_security_group_name }}'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed
-
-
+  
+  
 # clickhouse
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-clickhouse"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-clickhouse'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 8123
-    - 9000
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ os_security_group_name }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 9000
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 8123
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # vault
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-vault"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-vault'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_group: "{{ os_security_group_name }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 8200
-    - 8201
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: '{{ os_security_group_name }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 8200
+        - 8201
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # java spring boot
-- name: set os_security_group_name
-  set_fact: os_security_group_name="{{ os_project_name }}-java-spring-boot"
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-java-spring-boot'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: "{{ os_security_group_name }}"
-      remote_ip_prefix: "{{ os_subnet_cidr }}"
-      port_range_min: "{{ item }}"
-      port_range_max: "{{ item }}"
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-    with_items:
-    - 8080
-    - 8080
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: '{{ item }}'
+        port_range_max: '{{ item }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - 8080
+        - 8080
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
 # zabbix
-- name: set os_security_group_name
-  set_fact: os_security_group_name='{{ os_project_name }}-zabbix'
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-zabbix'
 - import_tasks: os_tasks_security_group.yml
 - block:
-  - import_tasks: os_tasks_security_group_rule.yml
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: '{{ os_security_group_name }}'
-      remote_ip_prefix: '{{ os_subnet_cidr }}'  # zabbix-server
-      port_range_min: 10050
-      port_range_max: 10051
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
-  - name: set rules {{ os_security_group_name }}
-    os_security_group_rule:
-      security_group: '{{ os_security_group_name }}'
-      port_range_min: 10050
-      port_range_max: 10051
-      remote_group: '{{ os_security_group_name }}'
-      direction: ingress
-      protocol: tcp
-      validate_certs: '{{ os_validate_certs }}'
+    - import_tasks: os_tasks_security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ zabbix_server_ip }}'
+        port_range_min: 10050
+        port_range_max: 10051
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: 10050
+        port_range_max: 10051
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 10050
+        port_range_max: 10051
+        remote_group: '{{ os_security_group_name }}'
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
   when: os_project_state == 'present' and os_security_group_modify.changed

@@ -1,5 +1,7 @@
+---
+
 - import_tasks: os_tasks_project.yml
-  when: os_mode != 'instances'
+  when: os_mode == 'project' or os_mode == 'all'
   tags: os_project
 
 
@@ -9,11 +11,9 @@
     group: '{{ item.group }}'
     role: '{{ item.role }}'
     validate_certs: '{{ os_validate_certs }}'
-  loop:
-    - { group: openstack-admins,          role: admin }
-    - { group: openstack-swiftoperators,  role: swiftoperator }
+  loop: '{{ os_group_roles }}'
   when:
-    - os_mode != 'instances'
+    - os_mode == 'project' or os_mode == 'roles' or os_mode == 'all'
   tags: os_user_groups
 
 
@@ -26,13 +26,13 @@
       OS_PROJECT_ID: '{{ os_project_id }}'
     os_quota:
       name: '{{ os_project_name }}'
-      security_group_rule: 100
-      security_group: 100
+      security_group_rule: '{{ os_quota_security_group_rule }}'
+      security_group: '{{ os_quota_security_group }}'
       validate_certs: '{{ os_validate_certs }}'
-      ram: 1024000
+      ram: '{{ os_quota_ram }}'
       state: present
 
-  when: os_mode != 'instances'
+  when: os_mode == 'porject' or os_mode == 'qouta' or os_mode == 'all'
   tags: os_quotas
 
 
@@ -76,7 +76,7 @@
           - net: '{{ os_project_name }}-net-1'
             subnet: '{{ os_project_name }}-subnet-1'
 
-  when: os_mode != 'instances'
+  when: os_mode == 'porject' or os_mode == 'network' or os_mode == 'all'
   tags: os_network
 
 
@@ -88,7 +88,7 @@
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
 
-  when: os_mode != 'instances'
+  when: os_mode == 'porject' or os_mode == 'sg' or os_mode == 'all'
   tags: [ os_security_groups, os_sg ]
 
 
@@ -105,7 +105,7 @@
         name: '{{ os_project_name }}-main-keypair'
         public_key: '{{ os_keypair_public_key }}'
 
-  when: os_mode != 'instances'
+  when: os_mode == 'project' or os_mode == 'keypair' or os_mode == 'all'
   tags: [ os_keypair ]
 
 
@@ -125,20 +125,19 @@
 
   when:
     - os_containers is defined
-    - os_containers | lenght > 0
-    - os_mode != 'instances'
+    - os_containers != ''
+    - os_mode == 'project' or os_mode == 'container' or os_mode == 'all'
   tags: os_container
 
 
 - include: os_tasks_instances.yml
   vars:
-    os_instance_state: '{{ os_bastion_state }}'
+    os_instance_state: present
   loop: '{{ os_bastion }}'
   loop_control:
     loop_var: os_instance
   when:
-    - os_bastion_state is defined
-    - os_mode != 'project'
+    - (os_bastion_state is defined and os_mode == 'instances') or os_mode == 'bastion' or os_mode == 'all'
   tags: os_bastion
 
 
@@ -147,8 +146,7 @@
   loop_control:
     loop_var: os_cluster
   when:
-    - os_clusters is defined
-    - os_mode != 'project'
+    - (os_clusters is defined and os_mode == 'instances') or os_mode == 'clusters' or os_mode == 'all'
   tags: os_clusters
 
 
@@ -158,6 +156,6 @@
     loop_var: os_instance
   when:
     - os_instances is defined
-    - os_instances | length > 0
-    - os_mode != 'project'
+    - os_instances != ''
+    - os_mode == 'instances'
   tags: os_instances

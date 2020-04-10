@@ -1,3 +1,5 @@
+---
+
 - name: get {{ os_project_name }} project id
   os_project_facts:
     name: '{{ os_project_name }}'
