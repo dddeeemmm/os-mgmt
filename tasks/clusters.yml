@@ -115,7 +115,7 @@
     when: os_cluster_image is search 'centos'
 
 
-- import_tasks: os_tasks_get_project_id.yml
+- import_tasks: get_project_id.yml
 
 - name: '{{ os_cluster_state }} anti-affinity group {{ os_project_name }}-{{ os_cluster.key }} in {{ os_project_name }}'
   environment:

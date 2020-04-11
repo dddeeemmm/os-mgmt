@@ -4,7 +4,7 @@
 - import_tasks: asserts.yml
   tags: ['always']
 
-- import_tasks: os_tasks_present.yml
+- import_tasks: present.yml
   environment:
     OS_USERNAME: '{{ os_username }}'
     OS_PASSWORD: '{{ os_password }}'
@@ -30,7 +30,7 @@
   - meta: end_play
     when: os_project_name != result.user_input
 
-  - import_tasks: os_tasks_absent.yml
+  - import_tasks: absent.yml
     environment:
       OS_USERNAME: '{{ os_username }}'
       OS_PASSWORD: '{{ os_password }}'

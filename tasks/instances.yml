@@ -115,7 +115,7 @@
     when: os_instance_image is search 'centos'
 
 
-- import_tasks: os_tasks_get_project_id.yml
+- import_tasks: get_project_id.yml
 
 
 - block:

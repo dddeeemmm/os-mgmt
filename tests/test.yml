@@ -45,4 +45,4 @@
         - { state: present }                            # simple as possible
 
   roles:
-  - { role: os_mgmt, tags: os_mgmt }
+  - { role: os_mgmt, tags: ['os_mgmt'] }

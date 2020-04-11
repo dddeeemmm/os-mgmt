@@ -12,15 +12,15 @@
 # egress
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-egress'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 
 
 # ingress
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-ingress'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: 0.0.0.0/0
@@ -35,9 +35,9 @@
 # icmp
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-icmp'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: 0.0.0.0/0
@@ -52,9 +52,9 @@
 # ssh
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-ssh'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ item }}'
@@ -70,9 +70,9 @@
   
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-ssh-bastion'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_group: '{{ os_project_name }}-ssh'
@@ -85,9 +85,9 @@
 
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-ssh-tower'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ tower_ip }}'
@@ -100,9 +100,9 @@
   
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-ssh-mgmt'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ mgmt_vm_ip }}'
@@ -117,9 +117,9 @@
 # http
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-http'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ item }}'
@@ -137,9 +137,9 @@
 # https
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-https'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ item }}'
@@ -157,9 +157,9 @@
 # consul
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-consul'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
   #      remote_group: "{{ os_security_group_name }}"
@@ -189,15 +189,15 @@
 # postgres
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-postgres-client'
-- import_tasks: os_tasks_security_group.yml
-- import_tasks: os_tasks_security_group_rule.yml
+- import_tasks: security_group.yml
+- import_tasks: security_group_rule.yml
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-postgres'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_group: '{{ item }}'
@@ -215,9 +215,9 @@
 # patroni
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-patroni'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -233,9 +233,9 @@
 # netdata
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-netdata'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ prometheus_ip }}'
@@ -250,9 +250,9 @@
 # rabbit
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-rabbit'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ item }}'
@@ -280,9 +280,9 @@
 # puma
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-puma'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -297,9 +297,9 @@
 # redis
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-redis'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -317,9 +317,9 @@
 # redis-sentinel
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-redis-sentinel'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -337,9 +337,9 @@
 # mongo
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-mongo'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -358,9 +358,9 @@
 # elastic-server
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-elastic-server'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -375,9 +375,9 @@
 # zookeeper
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-zookeeper'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -403,9 +403,9 @@
 # k8s
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-k8s'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         port_range_min: 1
@@ -440,9 +440,9 @@
 # gitlab runners
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-glrunner'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_ovirt_cidr }}'
@@ -460,9 +460,9 @@
 # rsync
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-rsync'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_group: '{{ os_security_group_name }}'
@@ -477,9 +477,9 @@
 # clickhouse
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-clickhouse'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_group: '{{ os_security_group_name }}'
@@ -506,9 +506,9 @@
 # vault
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-vault'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_group: '{{ os_security_group_name }}'
@@ -526,9 +526,9 @@
 # java spring boot
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-java-spring-boot'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ os_subnet_cidr }}'
@@ -546,9 +546,9 @@
 # zabbix
 - set_fact:
     os_security_group_name: '{{ os_project_name }}-zabbix'
-- import_tasks: os_tasks_security_group.yml
+- import_tasks: security_group.yml
 - block:
-    - import_tasks: os_tasks_security_group_rule.yml
+    - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
         remote_ip_prefix: '{{ zabbix_server_ip }}'
