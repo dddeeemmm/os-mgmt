@@ -1,8 +1,9 @@
 os_mgmt
 =========
-[[Ansible Galaxy]](https://galaxy.ansible.com/dddeeemmm/os_mgmt)
 
     # Manage OpenStack Projects, Instances and many more
+    # [[Ansible Galaxy]](https://galaxy.ansible.com/dddeeemmm/os_mgmt)
+
 
 Requirements
 ------------
