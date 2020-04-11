@@ -2,7 +2,7 @@
 # tasks file for os_mgmt
 
 - import_tasks: asserts.yml
-  tags: ['always']
+  tags: always
 
 - import_tasks: present.yml
   environment:

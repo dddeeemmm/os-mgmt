@@ -10,7 +10,7 @@
     - os_instances is defined
     - os_instances != ''
     - os_mode == 'instances' or os_mode== 'all'
-  tags: ['os_instances']
+  tags: os_instances
 
 - include: clusters.yml
   vars:
@@ -22,7 +22,7 @@
     - os_clusters is defined
     - os_clusters != ''
     - os_mode == 'instances' or os_mode == 'clusters' or os_mode == 'all'
-  tags: ['os_clusters']
+  tags: os_clusters
 
 - include: instances.yml
   vars:
@@ -32,7 +32,7 @@
     loop_var: os_instance
   when:
     - (os_bastion_state is defined and os_mode == 'instances') or os_mode == 'bastion' or os_mode == 'all'
-  tags: ['os_bastion']
+  tags: os_bastion
 
 
 - block:
@@ -42,7 +42,9 @@
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
     when: os_mode == 'project' or os_mode == 'sg' or os_mode == 'all'
-  tags: ['os_security_groups', 'os_sg']
+  tags:
+    - os_security_groups
+    - os_sg
 
 
 - block:
@@ -58,7 +60,7 @@
   when:
     - os_clusters is defined and os_clusters != ''
     - os_mode == 'instances' or os_mode == 'container' or os_mode == 'all'
-  tags: ['os_container']
+  tags: os_container
 
 
 - block:
@@ -100,7 +102,7 @@
         validate_certs: '{{ os_validate_certs }}'
 
   when: os_mode == 'project' or os_mode == 'network' or os_mode == 'all'
-  tags: ['os_network']
+  tags: os_network
 
 
 - block:
@@ -113,7 +115,7 @@
         name: '{{ os_project_name }}-main-keypair'
         validate_certs: '{{ os_validate_certs }}'
   when: os_mode == 'project' or os_mode == 'keypair' or os_mode == 'all'
-  tags: ['os_keypair']
+  tags: os_keypair
 
 
 - name: '{{ os_project_state }} {{ os_project_name }} project'
@@ -121,4 +123,4 @@
   environment:
     OS_PROJECT_ID: '{{ os_project_id }}'
   when: os_mode == 'project' or os_mode == 'all'
-  tags: ['os_project']
+  tags: os_project

@@ -2,7 +2,7 @@
 
 - import_tasks: project.yml
   when: os_mode == 'project' or os_mode == 'all'
-  tags: ['os_project']
+  tags: os_project
 
 
 - name: '{{ os_project_state }} permissions to {{ os_project_name }}'
@@ -14,7 +14,7 @@
   loop: '{{ os_group_roles }}'
   when:
     - os_mode == 'project' or os_mode == 'roles' or os_mode == 'all'
-  tags: ['os_user_groups']
+  tags: os_user_groups
 
 
 - block:
@@ -33,13 +33,15 @@
       state: present
 
   when: os_mode == 'porject' or os_mode == 'quota' or os_mode == 'all'
-  tags: ['os_quotas']
+  tags: os_quotas
 
 
 - block:
 
     - import_tasks: get_project_id.yml
-      tags: ['os_security_groups', 'os_sg']
+      tags:
+        - os_security_groups
+        - os_sg
 
     - name: '{{ os_project_state }} network in {{ os_project_name }}'
       environment:
@@ -77,7 +79,7 @@
             subnet: '{{ os_project_name }}-subnet-1'
 
   when: os_mode == 'porject' or os_mode == 'network' or os_mode == 'all'
-  tags: ['os_network']
+  tags: os_network
 
 
 - block:
@@ -89,7 +91,9 @@
         OS_PROJECT_ID: '{{ os_project_id }}'
 
   when: os_mode == 'porject' or os_mode == 'sg' or os_mode == 'all'
-  tags: ['os_security_groups', 'os_sg']
+  tags:
+    - os_security_groups
+    - os_sg
 
 
 - block:
@@ -106,7 +110,8 @@
         public_key: '{{ os_keypair_public_key }}'
 
   when: os_mode == 'project' or os_mode == 'keypair' or os_mode == 'all'
-  tags: ['os_keypair']
+  tags:
+    - os_keypair
 
 
 - block:
@@ -127,7 +132,8 @@
     - os_containers is defined
     - os_containers != ''
     - os_mode == 'project' or os_mode == 'container' or os_mode == 'all'
-  tags: ['os_container']
+  tags:
+    - os_container
 
 
 - include: instances.yml
@@ -138,7 +144,8 @@
     loop_var: os_instance
   when:
     - (os_bastion_state is defined and os_mode == 'instances') or os_mode == 'bastion' or os_mode == 'all'
-  tags: ['os_bastion']
+  tags:
+    - os_bastion
 
 
 - include: clusters.yml
@@ -147,7 +154,8 @@
     loop_var: os_cluster
   when:
     - (os_clusters is defined and os_mode == 'instances') or os_mode == 'clusters' or os_mode == 'all'
-  tags: ['os_clusters']
+  tags:
+    - os_clusters
 
 
 - include: instances.yml
@@ -158,4 +166,5 @@
     - os_instances is defined
     - os_instances != ''
     - os_mode == 'instances'
-  tags: ['os_instances']
+  tags:
+    - os_instances
