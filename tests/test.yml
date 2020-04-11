@@ -5,7 +5,7 @@
 
   vars:
 
-    os_mode: instances                                  # [required] instances | project | qouta | keypair | container | network | sg | bastion | clusters | all
+    os_mode: instances                                  # [required] instances | project | quota | keypair | container | network | sg | bastion | clusters | all
     
     os_project_state: present                           # [default: present] present | absent (create or destroy you work OpenStack project)
     

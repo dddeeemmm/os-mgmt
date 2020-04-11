@@ -21,7 +21,7 @@
 
   - import_tasks: get_project_id.yml
 
-  - name: set qoutas for {{ os_project_name }}
+  - name: set quotas for {{ os_project_name }}
     environment:
       OS_PROJECT_ID: '{{ os_project_id }}'
     os_quota:
@@ -32,7 +32,7 @@
       ram: '{{ os_quota_ram }}'
       state: present
 
-  when: os_mode == 'porject' or os_mode == 'qouta' or os_mode == 'all'
+  when: os_mode == 'porject' or os_mode == 'quota' or os_mode == 'all'
   tags: ['os_quotas']
 
 

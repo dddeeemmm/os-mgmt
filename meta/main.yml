@@ -30,7 +30,7 @@ galaxy_info:
   - tenant
   - securitygroup
   - containers
-  - qouta
+  - quota
   - network
   - router
   - subnet

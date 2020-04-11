@@ -20,7 +20,7 @@ os_identity_api_version_default:
 
 # Role options
 
-os_mode: instances                                     # [instances | project | roles | qouta | keypair | container | network | sg | bastion | clusters | all]
+os_mode: instances                                     # [instances | project | roles | quota | keypair | container | network | sg | bastion | clusters | all]
 ansible_connection: local
 ansible_python_interpretator: /usr/bin/python3
 os_validate_certs: no                                  # validate OpenStack certificate
