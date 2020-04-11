@@ -1,8 +1,8 @@
 os_mgmt
 =========
 
-    # Manage OpenStack Projects, Instances and many more
-    # https://galaxy.ansible.com/dddeeemmm/os_mgmt
+    Manage OpenStack Projects, Instances and many more
+    https://galaxy.ansible.com/dddeeemmm/os_mgmt
 
 
 Requirements
@@ -14,7 +14,7 @@ Requirements
 
     source 	openrc.sh   # or use OpenStack variables in deafaults/main.yml
 
-    defaults/main.yml => os_keypair_public_key
+    set os_keypair_public_key in defaults/main.yml
 
 
 Role Variables
