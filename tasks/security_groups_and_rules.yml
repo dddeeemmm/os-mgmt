@@ -170,19 +170,20 @@
         validate_certs: '{{ os_validate_certs }}'
         protocol: "{{ item.protocol }}"
       with_items:
-      - { cidr: '{{ os_subnet_cidr }}',     port: 8300, protocol: tcp     }
-      - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: tcp     }
-      - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: udp     }
-      - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: tcp     }
-      - { cidr: '{{ os_ovirt_cidr }}',      port: 8302, protocol: tcp     }
-      - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: udp     }
-      - { cidr: '{{ os_ovirt_cidr }}',      port: 8302, protocol: udp     }
-      - { cidr: '{{ os_office_cidr }}',     port: 8500, protocol: tcp     }
-      - { cidr: '{{ os_vpn_cidr }}',        port: 8500, protocol: tcp     }
-      - { cidr: '{{ os_office_cidr }}',     port: 8501, protocol: tcp     }
-      - { cidr: '{{ os_vpn_cidr }}',        port: 8501, protocol: tcp     }
-      - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: tcp     }
-      - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: udp     }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8300, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8301, protocol: udp }
+        - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: tcp }
+        - { cidr: '{{ os_openstack_cidr }}',  port: 8302, protocol: udp }
+        - { cidr: '{{ os_office_cidr }}',     port: 8500, protocol: tcp }
+        - { cidr: '{{ os_vpn_cidr }}',        port: 8500, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8500, protocol: tcp }
+        - { cidr: '{{ os_office_cidr }}',     port: 8501, protocol: tcp }
+        - { cidr: '{{ os_vpn_cidr }}',        port: 8501, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8501, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8501, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: tcp }
+        - { cidr: '{{ os_subnet_cidr }}',     port: 8600, protocol: udp }
   when: os_project_state == 'present' and os_security_group_modify.changed
 
 
@@ -445,7 +446,6 @@
     - import_tasks: security_group_rule.yml
     - os_security_group_rule:
         security_group: '{{ os_security_group_name }}'
-        remote_ip_prefix: '{{ os_ovirt_cidr }}'
         port_range_min: '{{ item }}'
         port_range_max: '{{ item }}'
         direction: ingress
