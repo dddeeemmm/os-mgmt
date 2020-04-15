@@ -6,16 +6,15 @@
 # but sys env from openrc.sh (`env | grep OS_`) have higher priority
 # it's a not required - you can still use source
 
-#os_username_default:                                  # will be asked interactively if not set or blank
-#os_password_default:                                  # will be asked interactively if not set or blank
-#os_project_name_default:                              # will be asked interactively if not set or blank
-os_project_id_default:
-os_project_domain_id_default:
-os_auth_url_default:
-os_user_domain_name_default:
-os_region_name_default:
-os_interface_default:
-os_identity_api_version_default:
+#os_password_default:                                  # \
+#os_project_name_default:                              # |
+#os_project_id_default:                                # |
+#os_project_domain_id_default:                         # |
+#os_auth_url_default:                                  #  > will be asked interactively if not set
+#os_user_domain_name_default:                          # |
+#os_region_name_default:                               # |
+#os_interface_default:                                 # |
+#os_identity_api_version_default:                      # /
 
 
 # Role options
