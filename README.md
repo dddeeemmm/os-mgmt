@@ -79,7 +79,7 @@ Example Run
 License
 -------
 
-    GPl 3.0
+    GPLv3
 
 
 Author Information
