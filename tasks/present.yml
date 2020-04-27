@@ -39,9 +39,6 @@
 - block:
 
     - import_tasks: get_project_id.yml
-      tags:
-        - os_security_groups
-        - os_sg
 
     - name: '{{ os_project_state }} network in {{ os_project_name }}'
       environment:
@@ -90,7 +87,8 @@
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
 
-  when: os_mode == 'porject' or os_mode == 'sg' or os_mode == 'all'
+  when:
+    - os_mode == 'porject' or os_mode == 'sg' or os_mode == 'all'
   tags:
     - os_security_groups
     - os_sg

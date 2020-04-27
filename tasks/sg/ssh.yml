@@ -1,0 +1,21 @@
+---
+
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-ssh'
+- import_tasks: security_group.yml
+- block:
+    - import_tasks: security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ item }}'
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
+        - 0.0.0.0/0
+  when: os_project_state == 'present' and os_security_group_modify.changed
+

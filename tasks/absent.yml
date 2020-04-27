@@ -36,12 +36,14 @@
 
 
 - block:
-  - import_tasks: get_project_id.yml
-  - name: '{{ os_project_state }} security groups and rules in {{ os_project_name }}'
-    import_tasks: security_groups_and_rules.yml
-    environment:
-      OS_PROJECT_ID: '{{ os_project_id }}'
-    when: os_mode == 'project' or os_mode == 'sg' or os_mode == 'all'
+    - import_tasks: get_project_id.yml
+    - name: '{{ os_project_state }} security groups and rules in {{ os_project_name }}'
+      import_tasks: security_groups_and_rules.yml
+      environment:
+        OS_PROJECT_ID: '{{ os_project_id }}'
+      vars:
+        os_sg: all
+      when: os_mode == 'project' or os_mode == 'sg' or os_mode == 'all'
   tags:
     - os_security_groups
     - os_sg

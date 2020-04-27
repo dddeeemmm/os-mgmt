@@ -42,7 +42,7 @@ sg_vault:                [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-
 sg_java_spring:          [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-java-spring-boot', '{{ os_project_name }}-http', '{{ os_project_name }}-https', '{{ os_project_name }}-postgres-client' ]
 sg_zabbix:               [ '{{ os_project_name }}-icmp', '{{ os_project_name }}-egress', '{{ os_project_name }}-ssh-bastion', '{{ os_project_name }}-netdata', '{{ os_project_name }}-zabbix', '{{ os_project_name }}-consul', '{{ os_project_name }}-zabbix' ]
 
-# Networks with masks
+# Networks (0.0.0.0/0)
 os_openstack_cidr:
 os_office_cidr:
 os_vpn_cidr:

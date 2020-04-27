@@ -117,6 +117,15 @@
 
 - import_tasks: get_project_id.yml
 
+- import_tasks: security_groups_and_rules.yml
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  vars:
+    os_sg: "{{ os_cluster_security_groups | regex_replace (os_project_name+'-', '') }}"
+  when:
+    - os_project_state == 'present'
+    - os_sg_check | bool
+
 - name: '{{ os_cluster_state }} anti-affinity group {{ os_project_name }}-{{ os_cluster.key }} in {{ os_project_name }}'
   environment:
     OS_PROJECT_ID: '{{ os_project_id }}'

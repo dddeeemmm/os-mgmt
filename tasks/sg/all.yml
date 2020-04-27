@@ -1,0 +1,11 @@
+---
+
+- name: get sg
+  find:
+    paths: ../tasks/sg/
+    file_type: file
+    excludes: all.yml
+  register: get_sg
+
+- include_tasks: sg/{{ item.path }}
+  with_items: '{{ get_sg.files }}'
