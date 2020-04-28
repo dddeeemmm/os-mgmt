@@ -13,4 +13,4 @@
        direction: ingress
        protocol: tcp
        validate_certs: '{{ os_validate_certs }}'
- when: os_project_state == 'present' and os_security_group_modify.changed
+  when: os_project_state == 'present' and os_security_group_modify.changed
