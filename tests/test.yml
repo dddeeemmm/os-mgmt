@@ -19,7 +19,7 @@
       - documents-history
 
     os_instances:                                       # [not required] instances of project
-        - { state: present,                             # [default: present] present | absent
+        - { state: present,                             # [default: present] present | absent | stop | start | pause | unpause | lock | unlock | suspend | resume | rebuild
             name: instance-1,                           # [default: instance] name of you instance
             img: centos-7-1901,                         # [default: {{ ubuntu }}] image
             hdd: 15,                                    # [not required] main HDD in Datastore
@@ -32,7 +32,7 @@
 
     os_clusters:                                        # [not required] dict clusters of project
       a-cluster:                                        # [required] name of cluster instances: a-cluster-[1:5]
-        - { state: present,                             # [default: present] present | absent
+        - { state: present,                             # [default: present] present | absent | stop | start | pause | unpause | lock | unlock | suspend | resume | rebuild
             count: 5,                                   # [default: 3] count VM's of cluster
             img: centos-7-1901,                         # [default: {{ ubuntu }}] image
             hdd: 15,                                    # [not required] main HDD in Datastore

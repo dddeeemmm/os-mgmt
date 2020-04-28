@@ -12,8 +12,6 @@ Requirements
     # https://docs.openstack.org/openstacksdk/latest/install/index.html
     # https://docs.openstack.org/ocata/user-guide/sdk-install.html
 
-    source 	openrc.sh   # or use OpenStack variables in deafaults/main.yml
-
     set os_keypair_public_key in defaults/main.yml
 
 
@@ -31,7 +29,7 @@ Role Variables
     os_bastion_state:               # [not required] present | absent (deploy {{ os_bastion }} instance)
 
     os_instances:                   # [not required] instances of project
-        - { state: present,         # [default: present] present | absent
+        - { state: present,         # [default: present] present | absent | stop | start | pause | unpause | lock | unlock | suspend | resume | rebuild
             name: instance-1,       # [default: instance] name of you instance 
             img: centos-7-1901,     # [default: {{ ubuntu }}] image 
             hdd: 15,                # [not required] main HDD in Datastore
@@ -43,7 +41,7 @@ Role Variables
 
     os_clusters:                    # [not required] dict clusters of project
       cluster:                      # [required] name of instances: cluster-[1:999]
-        - { state: present,         # [default: present] present | absent
+        - { state: present,         # [default: present] present | absent | stop | start | pause | unpause | lock | unlock | suspend | resume | rebuild
             count: 3,               # [default: 3] count VM's of cluster
             img: centos-7-1901,     # [default: {{ ubuntu }}] image 
             hdd: 15,                # [not required] main HDD in Datastore
