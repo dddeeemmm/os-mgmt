@@ -12,9 +12,7 @@ Requirements
     # https://docs.openstack.org/openstacksdk/latest/install/index.html
     # https://docs.openstack.org/ocata/user-guide/sdk-install.html
 
-    source 	openrc.sh   # or use OpenStack variables in deafaults/main.yml
-
-    set os_keypair_public_key in defaults/main.yml
+    set os_keypair_public_key and os_dns_domain in defaults/main.yml
 
 
 Role Variables
