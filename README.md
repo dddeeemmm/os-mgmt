@@ -1,16 +1,16 @@
 os_mgmt
 =========
 
-    Manage OpenStack Projects, Instances and many more
-    https://galaxy.ansible.com/dddeeemmm/os_mgmt
+Manage OpenStack Projects, Instances and many more
+https://galaxy.ansible.com/dddeeemmm/os_mgmt
 
 
 Requirements
 ------------
 
-    python3 -m pip install openstacksdk
-    # https://docs.openstack.org/openstacksdk/latest/install/index.html
-    # https://docs.openstack.org/ocata/user-guide/sdk-install.html
+python3 -m pip install openstacksdk
+https://docs.openstack.org/openstacksdk/latest/install/index.html
+https://docs.openstack.org/ocata/user-guide/sdk-install.html
 
 
 Role Variables
@@ -75,10 +75,10 @@ Example Run
 License
 -------
 
-    MIT
+MIT
 
 
 Author Information
 ------------------
 
-    Dmitrij Petrov
+Dmitrij Petrov
