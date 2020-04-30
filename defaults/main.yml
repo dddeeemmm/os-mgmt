@@ -6,59 +6,51 @@
 # but sys env from openrc.sh (`env | grep OS_`) have higher priority
 # it's a not required - you can still use source
 
-#os_username_default:                                  # will be asked interactively if not set or blank
-#os_password_default:                                  # will be asked interactively if not set or blank
-#os_project_name_default:                              # will be asked interactively if not set or blank
-os_project_id_default:
-os_project_domain_id_default:
-os_auth_url_default:
-os_user_domain_name_default:
-os_region_name_default:
-os_interface_default:
-os_identity_api_version_default:
+#os_password_default:                                  # \
+#os_project_name_default:                              # |
+#os_project_id_default:                                # |
+#os_project_domain_id_default:                         # |
+#os_auth_url_default:                                  #  > will be asked interactively if not set
+#os_user_domain_name_default:                          # |
+#os_region_name_default:                               # |
+#os_interface_default:                                 # |
+#os_identity_api_version_default:                      # /
 
 
 # Role options
-
-os_mode: instances                                     # [instances | project | roles | qouta | keypair | container | network | sg | bastion | clusters | all]
+os_mode: instances                                     # [instances | project | roles | quota | keypair | container | network | sg | bastion | clusters | all]
 ansible_connection: local
 ansible_python_interpretator: /usr/bin/python3
 os_validate_certs: no                                  # validate OpenStack certificate
 
-
 # Project
-
 os_project_state: present                              # [present | absent] - create or destroy target project
 os_project_description: etalon-openstack-project       # [not required] description of project
 
-
 # Keypair
-
 os_keypair_public_key:                                 # [required] keypair for target project
 
-
 # Containers
-
 #os_containers:                                        # default containers in each project
 #     - container-1
 #     - container-2
 
-
 # Network
-
 os_dns_domain: cloud                                   # [required] this is domain suffix you OpenStack instances: instance_name.project_name.{{ os_dns_domain }}
 os_dns_name_servers:                                   # [required] dns servers for subnet setup
      - 8.8.8.8
      - 8.8.4.4
-     
+
+# Security Groups
+os_sg_check: true                                      # [true | false] check and install security groups for each instance
+os_sg: []                                              # all or any values from tasks/sg/filename (without .yml) for defaults security groups in each project
+#     - ssh
+#     - icmp
 
 # Instances
-
 os_instances: []
-
 os_instance_fqdn_instance: '{{ os_instance.name }}.{{ os_project_name }}.{{ os_dns_domain }}'
 os_instance_fqdn_cluster: '{{ os_cluster.key }}-{{ item }}.{{os_project_name }}.{{ os_dns_domain }}'
-
 os_bastion:
      - { state: present, name: bastion, image: centos-7-1805, flavor: m1.small, security_groups: '{{ sg_bastion }}', groups: 'bastion' }
 

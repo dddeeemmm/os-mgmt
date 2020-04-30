@@ -1,0 +1,45 @@
+---
+
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-k8s'
+- import_tasks: security_group.yml
+- block:
+    - import_tasks: security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 1
+        port_range_max: 65535
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_group: '{{ os_security_group_name }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 1
+        port_range_max: 65535
+        direction: ingress
+        protocol: udp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_group: '{{ os_security_group_name }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 30000
+        port_range_max: 32770
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_ip_prefix: '{{ item }}'
+      with_items: '{{ os_subnet_cidr }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        port_range_min: 6443
+        port_range_max: 6443
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+        remote_ip_prefix: '{{ item }}'
+      with_items:
+        - '{{ os_office_cidr }}'
+        - '{{ os_vpn_cidr }}'
+        - '{{ os_subnet_cidr }}'
+  when: os_project_state == 'present' and os_security_group_modify.changed

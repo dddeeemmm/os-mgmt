@@ -1,7 +1,0 @@
----
-
-# consul
-- src: git@github.com:dddeeemmm/os_mgmt.git
-  scm: git
-  name: consul
-  version: master

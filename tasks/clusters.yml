@@ -115,7 +115,29 @@
     when: os_cluster_image is search 'centos'
 
 
-- import_tasks: os_tasks_get_project_id.yml
+- import_tasks: get_project_id.yml
+
+- import_tasks: security_groups_and_rules.yml
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  vars:
+    os_sg: "{{ os_cluster_security_groups | regex_replace (os_project_name+'-', '') }}"
+  when:
+    - os_project_state == 'present'
+    - os_sg_check | bool
+
+- name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }}'
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  os_server_action:
+    action: '{{ os_cluster_state }}'
+    server: '{{ os_cluster.key }}-{{ item }}'
+    image: '{{ os_cluster_image }}'
+    validate_certs: '{{ os_validate_certs }}'
+    wait: yes
+  with_sequence: count='{{ os_cluster_vm_count }}'
+  ignore_errors: true
+  when: os_cluster_state == 'stop' or os_cluster_state == 'start' or os_cluster_state == 'pause' or os_cluster_state == 'unpause' or os_cluster_state == 'lock' or os_cluster_state == 'unlock' or os_cluster_state == 'suspend' or os_cluster_state == 'resume' or os_cluster_state == 'rebuild'
 
 - name: '{{ os_cluster_state }} anti-affinity group {{ os_project_name }}-{{ os_cluster.key }} in {{ os_project_name }}'
   environment:
@@ -129,11 +151,12 @@
     policies:
       - anti-affinity
   register: os_anti_affinity_group_id
+  when: os_cluster_state == 'present' or os_cluster_state == 'absent'
 
 - name: set os_anti_affinity_group_id
   set_fact:
     os_anti_affinity_group_id: '{{ os_anti_affinity_group_id.server_group.id }}'
-  when: os_cluster_state != 'absent'
+  when: os_cluster_state == 'present'
 
 
 - block:
@@ -192,6 +215,7 @@
   when:
     - os_cluster_volume_advanced is defined and os_cluster_volume_advanced != 'unset'
     - os_cluster_volume is defined and os_cluster_volume != 'unset'
+    - os_cluster_state == 'present' or os_cluster_state == 'absent'
 
 
 - block:
@@ -250,6 +274,7 @@
   when:
     - os_cluster_volume_advanced is defined and os_cluster_volume_advanced != 'unset'
     - os_cluster_volume is undefined or os_cluster_volume == 'unset'
+    - os_cluster_state == 'present' or os_cluster_state == 'absent'
 
 
 - name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }} with /dev/sda:{{ os_cluster_volume }}GB'
@@ -282,6 +307,7 @@
   when:
     - os_cluster_volume_advanced is undefined or os_cluster_volume_advanced == 'unset'
     - os_cluster_volume is defined and os_cluster_volume != 'unset'
+    - os_cluster_state == 'present' or os_cluster_state == 'absent'
 
 - name: '{{ os_cluster_state }} {{ os_cluster.key }} cluster in {{ os_project_name }}'
   environment:
@@ -310,3 +336,4 @@
   when:
     - os_cluster_volume_advanced is undefined or os_cluster_volume_advanced == 'unset'
     - os_cluster_volume is undefined or os_cluster_volume == 'unset'
+    - os_cluster_state == 'present' or os_cluster_state == 'absent'

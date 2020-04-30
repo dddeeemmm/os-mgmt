@@ -1,0 +1,14 @@
+---
+
+# get os_subnet_cidr
+- os_subnets_facts:
+    name: '{{ os_project_name }}-subnet-1'
+  register: os_subnets_info
+
+- set_fact:
+    os_subnet_cidr: '{{ os_subnets_info.ansible_facts.openstack_subnets[0].cidr }}'
+
+- include_tasks: sg/{{ sg }}.yml
+  with_items: '{{ os_sg }}'
+  loop_control:
+    loop_var: sg

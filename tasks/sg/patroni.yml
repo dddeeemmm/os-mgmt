@@ -1,0 +1,24 @@
+---
+
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-patroni'
+- import_tasks: security_group.yml
+- block:
+    - import_tasks: security_group_rule.yml
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_ip_prefix: '{{ os_subnet_cidr }}'
+        port_range_min: 5432
+        port_range_max: 5432
+        direction: ingress
+        protocol: tcp`
+        validate_certs: '{{ os_validate_certs }}'
+    - os_security_group_rule:
+        security_group: '{{ os_security_group_name }}'
+        remote_group: "{{ os_security_group_name }}"
+        port_range_min: 8008
+        port_range_max: 8008
+        direction: ingress
+        protocol: tcp
+        validate_certs: '{{ os_validate_certs }}'
+  when: os_project_state == 'present' and os_security_group_modify.changed

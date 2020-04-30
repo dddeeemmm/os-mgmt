@@ -115,7 +115,28 @@
     when: os_instance_image is search 'centos'
 
 
-- import_tasks: os_tasks_get_project_id.yml
+- import_tasks: get_project_id.yml
+
+- import_tasks: security_groups_and_rules.yml
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  vars:
+    os_sg: "{{ os_instance_security_groups | regex_replace (os_project_name+'-', '') }}"
+  when:
+    - os_project_state == 'present'
+    - os_sg_check | bool
+
+- name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }}'
+  environment:
+    OS_PROJECT_ID: '{{ os_project_id }}'
+  os_server_action:
+    action: '{{ os_instance_state }}'
+    server: '{{ os_instance_name }}'
+    image: '{{ os_instance_image }}'
+    validate_certs: '{{ os_validate_certs }}'
+    wait: yes
+  ignore_errors: true
+  when: os_instance_state == 'stop' or os_instance_state == 'start' or os_instance_state == 'pause' or os_instance_state == 'unpause' or os_instance_state == 'lock' or os_instance_state == 'unlock' or os_instance_state == 'suspend' or os_instance_state == 'resume' or os_instance_state == 'rebuild'
 
 
 - block:
@@ -170,6 +191,7 @@
   when:
     - os_instance_volume_advanced is defined and os_instance_volume_advanced != 'unset'
     - os_instance_volume is defined and os_instance_volume != 'unset'
+    - os_instance_state == 'present' or os_instance_state == 'absent'
 
 
 - name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }} with /dev/sda:{{ os_instance_volume }}GB'
@@ -199,6 +221,7 @@
   when:
     - os_instance_volume_advanced is undefined or os_instance_volume_advanced == 'unset'
     - os_instance_volume is defined and os_instance_volume != 'unset'
+    - os_instance_state == 'present' or os_instance_state == 'absent'
 
 
 - name: '{{ os_instance_state }} {{ os_instance_name }} in {{ os_project_name }}'
@@ -225,3 +248,4 @@
   when:
     - os_instance_volume_advanced is undefined or os_instance_volume_advanced == 'unset'
     - os_instance_volume is undefined or os_instance_volume == 'unset'
+    - os_instance_state == 'present' or os_instance_state == 'absent'

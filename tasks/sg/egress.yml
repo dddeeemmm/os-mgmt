@@ -1,0 +1,5 @@
+---
+
+- set_fact:
+    os_security_group_name: '{{ os_project_name }}-egress'
+- import_tasks: security_group.yml
