@@ -1,0 +1,18 @@
+---
+
+- hosts: localhost
+
+  pre_tasks:
+    - command: 'curl https://discovery.etcd.io/new?size=1'
+      register: result
+    - set_fact:
+        etcd_token: '{{ result.stdout }}'
+
+  vars:
+    os_userdata_template: coreos-k8s-binary-standalone
+    os_instances:
+      - { state: absent,  name: k8s-master, img: '{{ core }}', fv: '02.02048.16', sg: ['{{ os_project_name }}-k8s'] }
+      - { state: present, name: k8s-master, img: '{{ core }}', fv: '02.02048.16', sg: ['{{ os_project_name }}-k8s'] }
+
+  roles:
+    - { role: os_mgmt, tags: os_mgmt }

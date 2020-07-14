@@ -1,0 +1,272 @@
+os_userdata: |
+  #cloud-config
+  
+  write_files:
+    - path: "/tmp/gen_certs.sh"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        #!/bin/bash
+        # Creating TLS certs
+        echo "Creating CA ROOT**********************************************************************"
+        openssl genrsa -out ca-key.pem 2048
+        openssl req -x509 -new -nodes -key ca-key.pem -days 10000 -out ca.pem -subj "/CN=kube-ca"
+        echo "creating API Server certs*************************************************************"
+        master_Ip=$private_ipv4
+        cat >openssl.cnf<<EOF
+        [req]
+        req_extensions = v3_req
+        distinguished_name = req_distinguished_name
+        [req_distinguished_name]
+        [ v3_req ]
+        basicConstraints = CA:FALSE
+        keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+        subjectAltName = @alt_names
+        [alt_names]
+        DNS.1 = kubernetes
+        DNS.2 = kubernetes.default
+        DNS.3 = kubernetes.default.svc
+        DNS.4 = kubernetes.default.svc.cluster.local
+        IP.1 = 10.96.0.10
+        IP.2 = $private_ipv4
+        EOF
+        openssl genrsa -out apiserver-key.pem 2048
+        openssl req -new -key apiserver-key.pem -out apiserver.csr -subj "/CN=kube-apiserver" -config openssl.cnf
+        openssl x509 -req -in apiserver.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out apiserver.pem -days 365 -extensions v3_req -extfile openssl.cnf
+        echo "Creating Admin certs********************************************************"
+        openssl genrsa -out admin-key.pem 2048
+        openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=kube-admin"
+        openssl x509 -req -in admin.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out admin.pem -days 365
+        mv *.pem /etc/kubernetes/ssl
+  
+    - path: "/etc/kubernetes/kubelet-config.yaml"
+      permissions: "0644"
+      owner: "root"
+      content: |
+        kind: KubeletConfiguration
+        apiVersion: kubelet.config.k8s.io/v1beta1
+        authentication:
+          anonymous:
+            enabled: true
+          webhook:
+            enabled: false
+          x509:
+            clientCAFile: "/etc/kubernetes/ssl/ca.pem"
+        authorization:
+          mode: AlwaysAllow
+        clusterDomain: "cluster.local"
+        clusterDNS:
+          - "10.122.0.10"
+        resolvConf: "/run/systemd/resolve/resolv.conf"
+        runtimeRequestTimeout: "15m"
+        tlsCertFile: "/etc/kubernetes/ssl/ca.pem"
+        tlsPrivateKeyFile: "/etc/kubernetes/ssl/ca-key.pem"
+  
+    - path: "/etc/kubernetes/cloud-config"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        [Global]
+        auth-url =
+        username =
+        password = ""
+        tenant-name =
+        tenant-id =
+        region =
+        domain-name =
+        [BlockStorage]
+        trust-device-path = false
+        bs-version = v2
+        [LoadBalancer]
+        lb-version = v2
+        subnet-id =
+        create-monitor = yes
+        use-octavia = yes
+        manage-security-groups = true
+        monitor-delay = 1m
+        monitor-timeout = 30s
+        monitor-max-retries = 3
+        [Route]
+        router-id =
+
+  coreos:
+    locksmith:
+      endpoint: "https://127.0.0.1:2379"
+  
+    units:
+      - name: etcd-member.service
+        drop-ins:
+          - name: 1-override.conf
+            content: |
+                [Service]
+                Environment="ETCD_DISCOVERY={{ etcd_token }}"
+                Environment="ETCD_ADVERTISE_CLIENT_URLS=http://$private_ipv4:2379,https://$private_ipv4:2379"
+                Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://$private_ipv4:2380"
+                Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379"
+                Environment="ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
+        command: start
+        enable: true
+  
+      - name: generate_directory.service
+        command: start
+        content: |
+          [Unit]
+          Description=Make Directory for kubernetes
+          [Service]
+          User=root
+          ExecStart=/bin/mkdir -p /etc/kubernetes/ssl /etc/kubernetes/manifests
+          Type=oneshot
+      
+      - name: generate-certs.service
+        command: start
+        content: |
+          [Unit]
+          Description=Generate service-account key file
+          Requires=generate_directory.service
+          After=generate_directory.service
+          [Service]
+          User=root
+          ExecStart=/tmp/gen_certs.sh
+          Type=oneshot
+  
+      - name: generate-serviceaccount-key.service
+        command: start
+        content: |
+          [Unit]
+          Description=Generate service-account key file
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStart=/bin/openssl genrsa -out /opt/bin/kube-serviceaccount.key 2048 2>/dev/null
+          RemainAfterExit=yes
+          Type=oneshot
+      
+      - name: setup-network-environment.service
+        command: start
+        content: |
+          [Unit]
+          Description=Setup Network Environment
+          Documentation=https://github.com/kelseyhightower/setup-network-environment
+          Requires=network-online.target
+          After=network-online.target
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/setup-network-environment -z /opt/bin/setup-network-environment https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/setup-network-environment
+          ExecStart=/opt/bin/setup-network-environment
+          RemainAfterExit=yes
+          Type=oneshot
+      
+      #- name: docker.service
+      #  command: start
+      #  enable: true
+      
+      - name: kubelet.service
+        command: start
+        enable: true
+        content: |
+          [Unit]
+          Description=Kubernetes Kubelet
+          Documentation=https://github.com/kubernetes/kubernetes
+          Requires=etcd-member.service setup-network-environment.service generate-serviceaccount-key.service
+          After=etcd-member.service setup-network-environment.service generate-serviceaccount-key.service
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubelet
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
+          ExecStart=/opt/bin/kubelet \
+            --config=/etc/kubernetes/kubelet-config.yaml \
+            --network-plugin=kubenet \
+            --register-node=true \
+            --resolv-conf=/etc/resolv.conf \
+            --cluster-dns=10.122.0.10 \
+            --cloud-config=/etc/kubernetes/cloud-config \
+            --v=10
+          Restart=on-failure
+          RestartSec=5
+          [Install]
+          WantedBy=multi-user.target
+      
+      - name: kube-apiserver.service
+        command: start
+        enable: true
+        content: |
+          [Unit]
+          Description=Kubernetes API Server
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          Requires=kubelet.service
+          After=kubelet.service
+          [Service]
+          EnvironmentFile=/etc/network-environment
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-apiserver -z /opt/bin/kube-apiserver https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kube-apiserver
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-apiserver
+          ExecStart=/opt/bin/kube-apiserver \
+          --service-account-key-file=/opt/bin/kube-serviceaccount.key \
+          --service-account-lookup=false \
+          --admission-control=NamespaceLifecycle,NamespaceAutoProvision,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota \
+          --runtime-config=api/v1 \
+          --allow-privileged=true \
+          --insecure-bind-address=0.0.0.0 \
+          --insecure-port=8080 \
+          --secure-port=6443 \
+          --service-cluster-ip-range=10.100.0.0/16 \
+          --etcd-servers=http://127.0.0.1:2379 \
+          --logtostderr=true
+          Restart=always
+          RestartSec=10
+      
+      - name: kube-controller-manager.service
+        command: start
+        content: |
+          [Unit]
+          Description=Kubernetes Controller Manager
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          Requires=kube-apiserver.service
+          After=kube-apiserver.service
+          [Service]
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-controller-manager -z /opt/bin/kube-controller-manager https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kube-controller-manager
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-controller-manager
+          ExecStart=/opt/bin/kube-controller-manager \
+          --service-account-private-key-file=/opt/bin/kube-serviceaccount.key \
+          --master=127.0.0.1:8080 \
+          --logtostderr=true
+          Restart=always
+          RestartSec=10
+      
+      - name: kube-scheduler.service
+        command: start
+        content: |
+          [Unit]
+          Description=Kubernetes Scheduler
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          Requires=kube-apiserver.service
+          After=kube-apiserver.service
+          [Service]
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/kube-scheduler -z /opt/bin/kube-scheduler https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kube-scheduler
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/kube-scheduler
+          ExecStart=/opt/bin/kube-scheduler --master=127.0.0.1:8080
+          Restart=always
+          RestartSec=10
+      
+      - name: kubectl.service
+        command: start
+        content: |
+          [Unit]
+          Description=kubectl controls the Kubernetes cluster manager
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStart=/usr/bin/curl -L -o /opt/bin/kubectl -z /opt/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl
+          ExecStartPost=/usr/bin/chmod +x /opt/bin/kubectl
+          RemainAfterExit=yes
+          Type=oneshot
+    
+    passwd:
+      users:
+        - name: core
+          ssh_authorized_keys:
+            - {{ os_keypair_public_key }}
+  
+    update:
+      group: stable
+      reboot-strategy: off

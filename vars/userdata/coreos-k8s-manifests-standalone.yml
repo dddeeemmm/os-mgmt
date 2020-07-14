@@ -1,0 +1,408 @@
+os_userdata: |
+  #cloud-config
+  
+  write_files:
+    - path: "/tmp/gen_certs.sh"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        #!/bin/bash
+        # Creating TLS certs
+        echo "Creating CA ROOT**********************************************************************"
+        openssl genrsa -out ca-key.pem 2048
+        openssl req -x509 -new -nodes -key ca-key.pem -days 10000 -out ca.pem -subj "/CN=kube-ca"
+        echo "creating API Server certs*************************************************************"
+        master_Ip=$private_ipv4
+        cat >openssl.cnf<<EOF
+        [req]
+        req_extensions = v3_req
+        distinguished_name = req_distinguished_name
+        [req_distinguished_name]
+        [ v3_req ]
+        basicConstraints = CA:FALSE
+        keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+        subjectAltName = @alt_names
+        [alt_names]
+        DNS.1 = kubernetes
+        DNS.2 = kubernetes.default
+        DNS.3 = kubernetes.default.svc
+        DNS.4 = kubernetes.default.svc.cluster.local
+        IP.1 = 10.96.0.10
+        IP.2 = $private_ipv4
+        EOF
+        openssl genrsa -out apiserver-key.pem 2048
+        openssl req -new -key apiserver-key.pem -out apiserver.csr -subj "/CN=kube-apiserver" -config openssl.cnf
+        openssl x509 -req -in apiserver.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out apiserver.pem -days 365 -extensions v3_req -extfile openssl.cnf
+        echo "Creating Admin certs********************************************************"
+        openssl genrsa -out admin-key.pem 2048
+        openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=kube-admin"
+        openssl x509 -req -in admin.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out admin.pem -days 365
+        mv *.pem /etc/kubernetes/ssl
+    
+    - path: "/etc/kubernetes/cloud-config"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        [Global]
+        auth-url =
+        username =
+        password = ""
+        tenant-name =
+        tenant-id =
+        region = dc-cr
+        domain-name = balance-pl
+        [BlockStorage]
+        trust-device-path = false
+        bs-version = v2
+        [LoadBalancer]
+        lb-version = v2
+        subnet-id =
+        create-monitor = yes
+        use-octavia = yes
+        manage-security-groups = true
+        monitor-delay = 1m
+        monitor-timeout = 30s
+        monitor-max-retries = 3
+        [Route]
+        router-id =
+    
+    - path: "/etc/kubernetes/kubelet.conf"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        kind: KubeletConfiguration
+        address: 0.0.0.0
+        apiVersion: kubelet.config.k8s.io/v1beta1
+        authentication:
+          anonymous:
+            enabled: true
+          webhook:
+            cacheTTL: 2m0s
+            enabled: false
+          x509:
+            clientCAFile: /etc/kubernetes/ssl/ca.pem
+        authorization:
+          mode: AlwaysAllow
+          webhook:
+            cacheAuthorizedTTL: 5m0s
+            cacheUnauthorizedTTL: 30s
+        clusterDNS:
+        - 10.8.10.10
+        clusterDomain: cluster.local
+        configMapAndSecretChangeDetectionStrategy: Watch
+        containerLogMaxFiles: 5
+        containerLogMaxSize: 10Mi
+        contentType: application/vnd.kubernetes.protobuf
+        cpuCFSQuota: true
+        cpuCFSQuotaPeriod: 100ms
+        cpuManagerPolicy: none
+        cpuManagerReconcilePeriod: 10s
+        enableControllerAttachDetach: true
+        enableDebuggingHandlers: true
+        enforceNodeAllocatable:
+        - pods
+        eventBurst: 10
+        eventRecordQPS: 5
+        evictionHard:
+          imagefs.available: 15%
+          memory.available: 100Mi
+          nodefs.available: 10%
+          nodefs.inodesFree: 5%
+        evictionPressureTransitionPeriod: 5m0s
+        failSwapOn: true
+        fileCheckFrequency: 20s
+        hairpinMode: promiscuous-bridge
+        healthzBindAddress: 127.0.0.1
+        healthzPort: 10248
+        httpCheckFrequency: 20s
+        imageGCHighThresholdPercent: 85
+        imageGCLowThresholdPercent: 80
+        imageMinimumGCAge: 2m0s
+        iptablesDropBit: 15
+        iptablesMasqueradeBit: 14
+        kubeAPIBurst: 10
+        kubeAPIQPS: 5
+        makeIPTablesUtilChains: true
+        maxOpenFiles: 1000000
+        maxPods: 110
+        nodeLeaseDurationSeconds: 40
+        nodeStatusReportFrequency: 1m0s
+        nodeStatusUpdateFrequency: 10s
+        oomScoreAdj: -999
+        podPidsLimit: -1
+        port: 10250
+        registryBurst: 10
+        registryPullQPS: 5
+        resolvConf: /etc/resolv.conf
+        rotateCertificates: true
+        runtimeRequestTimeout: 2m0s
+        serializeImagePulls: true
+        staticPodPath: /etc/kubernetes/manifests
+        streamingConnectionIdleTimeout: 4h0m0s
+        syncFrequency: 1m0s
+        topologyManagerPolicy: none
+        volumeStatsAggPeriod: 1m0s
+    
+    - path: "/etc/kubernetes/manifests/kube-apiserver.yaml"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kube-apiserver
+          namespace: kube-system
+        spec:
+          hostNetwork: true
+          containers:
+          - name: kube-apiserver
+            image: k8s.gcr.io/kube-apiserver:v1.17.0
+            command:
+            - kube-apiserver
+            - --bind-address=0.0.0.0
+            - --etcd-servers=http://$private_ipv4:2379
+            - --allow-privileged=true
+            - --service-cluster-ip-range=10.8.10.0/24
+            - --secure-port=443
+            - --advertise-address=$private_ipv4
+            - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+            - --tls-cert-file=/etc/kubernetes/ssl/apiserver.pem
+            - --tls-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+            - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+            - --service-account-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+            - --runtime-config=extensions/v1beta1/networkpolicies=true
+            - --anonymous-auth=false
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                port: 8080
+                path: /healthz
+              initialDelaySeconds: 15
+              timeoutSeconds: 15
+            ports:
+            - containerPort: 443
+              hostPort: 443
+              name: https
+            - containerPort: 8080
+              hostPort: 8080
+              name: local
+            volumeMounts:
+            - mountPath: /etc/kubernetes/ssl
+              name: ssl-certs-kubernetes
+              readOnly: true
+            - mountPath: /etc/ssl/certs
+              name: ssl-certs-host
+              readOnly: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
+    
+    - path: "/etc/kubernetes/manifests/kube-controller-manager.yaml"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kube-controller-manager
+          namespace: kube-system
+        spec:
+          hostNetwork: true
+          containers:
+          - name: kube-controller-manager
+            image: k8s.gcr.io/kube-controller-manager:v1.17.0
+            command:
+            - kube-controller-manager
+            - --master=http://127.0.0.1:8080
+            - --leader-elect=true
+            - --service-account-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+            - --root-ca-file=/etc/kubernetes/ssl/ca.pem
+            resources:
+              requests:
+                cpu: 200m
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                path: /healthz
+                port: 10252
+              initialDelaySeconds: 15
+              timeoutSeconds: 15
+            volumeMounts:
+            - mountPath: /etc/kubernetes/ssl
+              name: ssl-certs-kubernetes
+              readOnly: true
+            - mountPath: /etc/ssl/certs
+              name: ssl-certs-host
+              readOnly: true
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
+
+    - path: "/etc/kubernetes/manifests/kube-proxy.yaml"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kube-proxy
+          namespace: kube-system
+        spec:
+          hostNetwork: true
+          containers:
+          - name: kube-proxy
+            image: k8s.gcr.io/kube-proxy:v1.17.0
+            command:
+            - kube-proxy
+            - --master=http://127.0.0.1:8080
+            securityContext:
+              privileged: true
+            volumeMounts:
+            - mountPath: /etc/ssl/certs
+              name: ssl-certs-host
+              readOnly: true
+          volumes:
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
+    
+    - path: "/etc/kubernetes/manifests/kube-scheduler.yaml"
+      permissions: "0755"
+      owner: "root"
+      content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kube-scheduler
+          namespace: kube-system
+        spec:
+          hostNetwork: true
+          containers:
+          - name: kube-scheduler
+            image: k8s.gcr.io/kube-scheduler:v1.16.0
+            command:
+            - kube-scheduler
+            - --master=http://127.0.0.1:8080
+            - --leader-elect=true
+            resources:
+              requests:
+                cpu: 100m
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                path: /healthz
+                port: 10251
+              initialDelaySeconds: 15
+              timeoutSeconds: 15
+  
+  coreos:
+    locksmith:
+      endpoint: "https://127.0.0.1:2379"
+    
+    units:
+      - name: etcd-member.service
+        drop-ins:
+          - name: 1-override.conf
+            content: |
+                [Service]
+                Environment="ETCD_DISCOVERY={{ etcd_token }}"
+                Environment="ETCD_ADVERTISE_CLIENT_URLS=http://$private_ipv4:2379,https://$private_ipv4:2379"
+                Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://$private_ipv4:2380"
+                Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379"
+                Environment="ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
+        command: start
+        enable: true
+
+      - name: download-cni.service
+        command: start
+        content: |
+          [Unit]
+          Description=Download CNI binary
+          [Service]
+          ExecStartPre=/bin/mkdir -p /opt/cni /opt/cni/bin
+          ExecStartPre=/usr/bin/curl -L -o /opt/cni/cni-amd64-v0.4.0.tgz -z /opt/cni/cni-amd64-v0.4.0.tgz https://github.com/containernetworking/cni/releases/download/v0.4.0/cni-amd64-v0.4.0.tgz
+          ExecStart=/usr/bin/tar -xvzf /opt/cni/cni-amd64-v0.4.0.tgz -C /opt/cni/bin/
+          RemainAfterExit=yes
+          Type=oneshot
+
+      - name: generate_directory.service
+        command: start
+        content: |
+          [Unit]
+          Description=Make Directory for kubernetes
+          [Service]
+          User=root
+          ExecStart=/bin/mkdir -p /etc/kubernetes/ssl /etc/kubernetes/manifests
+          Type=oneshot
+      
+      - name: generate-certs.service
+        command: start
+        content: |
+          [Unit]
+          Description=Generate service-account key file
+          Requires=generate_directory.service
+          After=generate_directory.service
+          [Service]
+          User=root
+          ExecStart=/tmp/gen_certs.sh
+          Type=oneshot
+      
+      - name: docker.service
+        command: start
+        enable: true
+      
+      - name: kubelet.service
+        command: start
+        content: |
+          [Unit]
+          Description=Kubernetes kubelet
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          Requires=docker.service
+          After=docker.service etcd-member.service
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubelet
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
+          ExecStart=/opt/bin/kubelet \
+          --config=/etc/kubernetes/kubelet.conf \
+          --network-plugin=kubenet \
+          --network-plugin-mtu=9148 \
+          --pod-cidr=10.96.0.0/16 \
+          --pod-infra-container-image=k8s.gcr.io/pause:3.1 \
+          --cloud-config=/etc/kubernetes/cloud-config \
+          --cloud-provider=external \
+          --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
+          Restart=always
+          RestartSec=10
+
+      - name: kubectl.service
+        command: start
+        content: |
+          [Unit]
+          Description=kubectl controls the Kubernetes cluster manager
+          Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStart=/usr/bin/curl -L -o /opt/bin/kubectl -z /opt/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl
+          ExecStartPost=/usr/bin/chmod +x /opt/bin/kubectl
+          RemainAfterExit=yes
+          Type=oneshot
+
+    passwd:
+      users:
+        - name: core
+          ssh_authorized_keys:
+            - {{ os_keypair_public_key }}
+
+    update:
+      group: stable
+      reboot-strategy: off

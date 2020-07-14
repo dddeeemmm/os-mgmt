@@ -55,7 +55,7 @@ os_bastion:
      - { state: present, name: bastion, image: centos-7-1805, flavor: m1.small, security_groups: '{{ sg_bastion }}', groups: 'bastion' }
 
 # Cloud-config https://cloudinit.readthedocs.io/en/latest/topics/examples.html
-os_userdata_defaults: |
+os_userdata_default: |
      #cloud-config
      fqdn: {{ os_instance_fqdn }}
      hostname: {{ os_instance_fqdn }}

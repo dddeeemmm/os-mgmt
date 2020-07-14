@@ -32,7 +32,7 @@
       ram: '{{ os_quota_ram }}'
       state: present
 
-  when: os_mode == 'porject' or os_mode == 'quota' or os_mode == 'all'
+  when: os_mode == 'project' or os_mode == 'quota' or os_mode == 'all'
   tags: os_quotas
 
 
@@ -75,7 +75,7 @@
           - net: '{{ os_project_name }}-net-1'
             subnet: '{{ os_project_name }}-subnet-1'
 
-  when: os_mode == 'porject' or os_mode == 'network' or os_mode == 'all'
+  when: os_mode == 'network' or os_mode == 'all'
   tags: os_network
 
 
@@ -87,8 +87,7 @@
       environment:
         OS_PROJECT_ID: '{{ os_project_id }}'
 
-  when:
-    - os_mode == 'porject' or os_mode == 'sg' or os_mode == 'all'
+  when: os_mode == 'sg' or os_mode == 'all'
   tags:
     - os_security_groups
     - os_sg
@@ -129,7 +128,7 @@
   when:
     - os_containers is defined
     - os_containers != ''
-    - os_mode == 'project' or os_mode == 'container' or os_mode == 'all'
+    - os_mode == 'container' or os_mode == 'all'
   tags:
     - os_container
 
